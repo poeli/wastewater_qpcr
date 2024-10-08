@@ -1,0 +1,8 @@
+{
+    "taxonium" : {
+        "frontend_local_port": 8878,
+        "frontend_url": "https://rapter.edgebioinformatics.org/taxonium_frontend",
+        "backend_local_port": 8879,
+        "backend_url": "https://rapter.edgebioinformatics.org/taxonium_backend"
+    }
+}

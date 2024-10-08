@@ -1,0 +1,14 @@
+[Unit]
+Description=Wastewater qPCR app
+After=docker.wastewater_qpcr_app.service
+ 
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop wastewater_qpcr_app
+ExecStartPre=-/usr/bin/docker rm wastewater_qpcr_app
+ExecStartPre=/usr/bin/docker pull poeli/wastewater_qpcr_app:latest
+ExecStart=/usr/bin/docker run --name ww_qpcr_app --rm -p 8765:8765 -v "/{PATH}/wastewater_qpcr.github/data:/app/assets/data" -e "MAXMEM=8000" poeli/wastewater_qpcr_app:latest
+
+[Install]
+WantedBy=multi-user.target

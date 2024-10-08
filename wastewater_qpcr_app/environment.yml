@@ -1,0 +1,15 @@
+name: rapter-env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - dash
+  - plotly
+  - pandas
+  - numpy
+  - matplotlib
+  - seaborn
+  - dash-bootstrap-components
+  - diskcache
