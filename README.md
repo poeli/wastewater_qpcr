@@ -6,7 +6,7 @@
 cd wastewater_qpcr_app/
 conda env create -f environment.yml
 conda activate rapter-env
-python app.py
+python wastewater_qpcr_app.py
 ```
 
 - Using Docker:
@@ -15,7 +15,6 @@ python app.py
 $ docker run \
     --rm \
     -p 8765:8765 \
-    -v "/{PATH}/wastewater_qpcr.github/data:/app/assets/data" \
-    -e "MAXMEM=8000" \
+    -v "/$PATH:/app/assets/data" \
     poeli/wastewater_qpcr_app:latest
 ```
