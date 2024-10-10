@@ -197,7 +197,7 @@ viz_layout = html.Div(
                     dbc.Row(
                         [
                             dbc.Col(
-                                dcc.Graph(id="chart1-graph-id"), width=12, lg=12
+                                dcc.Loading(dcc.Graph(id="chart1-graph-id")), width=12, lg=12
                             ),
                         ],
                     )],
@@ -235,7 +235,7 @@ viz_layout = html.Div(
                     dbc.Row(
                         [
                             dbc.Col(
-                                dcc.Graph(id="chart2-graph-id"), width=12, lg=12
+                                dcc.Loading(dcc.Graph(id="chart2-graph-id")), width=12, lg=12
                             ),
                         ],
                     )],
