@@ -1,20 +1,42 @@
 #!/usr/bin/env python
 import pandas as pd
-from uuid import uuid1
 import logging
-import json
 import os
 
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import dash
 from dash import dcc, html, State, Input, Output, set_props, Patch, no_update, callback, ctx
+import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M',
 )
+
+ref_url = 'index'
+
+# external stylesheets
+external_stylesheets = [
+    dbc.themes.BOOTSTRAP, 
+    dbc.icons.FONT_AWESOME,
+]
+
+app = dash.Dash(__name__, 
+    external_stylesheets = external_stylesheets,
+    suppress_callback_exceptions = True,
+    # background_callback_manager=background_callback_manager,
+    # long_callback_manager=long_callback_manager,
+)
+
+server = app.server
+
+app.title = "Wastewater qPCR"
+# app._favicon = "favicon.ico"
+
+
+layout_config = {}
 
 # loading
 # launch_uid = None
@@ -52,6 +74,67 @@ CARD_TEXT_STYLE = {
     'color': '#0074D9'
 }
 
+
+# building the navigation bar
+dropdown = dbc.DropdownMenu(
+    id = "pathogen-menu-id",
+    children=[
+        dbc.DropdownMenuItem("SARS-CoV-2", href="/"),
+    ],
+    nav = True,
+    in_navbar = True,
+    label = "SARS-CoV-2",
+)
+
+navbar = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A(
+                # Use row and col to control vertical alignment of logo / brand
+                dbc.Row(
+                    [
+                        # dbc.Col(html.Img(src="/assets/virus-solid-white.png", height="27px")),
+                        dbc.Col([
+                            html.Span([
+                                    html.I(className="fa-solid fa-droplet"),
+                                ],
+                                className="me-2",
+                                style={"font-size": "1.1rem", "color": "white"}
+                            ),
+                            dbc.NavbarBrand("LANL Wastewater", className="ml-1")
+                        ]),
+                    ],
+                    align="center",
+                ),
+                href="/",
+                className="text-decoration-none"
+            ),
+            dbc.NavbarToggler(id="navbar-toggler2"),
+            dbc.Collapse(
+                dbc.Nav(
+                    # right align dropdown menu with ml-auto className
+                    [dropdown], className="ml-auto", navbar=True
+                ),
+                id="navbar-collapse2",
+                navbar=True,
+            ),
+            html.Div([
+                dcc.Dropdown(
+                    id="selected-uuid-id",
+                    options=[{'label': 'test', 'value': 'test'}],
+                    placeholder="Results selection",
+                    style={'width': '15rem'},
+                    className='small',
+                )],
+                className='d-flex'
+            ),
+        ]
+    ),
+    color="dark",
+    dark=True,
+    className='w-100 fixed-top container-fluid',
+)
+
 # # define the modal. In this case it only shows the progress bar and a cancel button
 # modal = dbc.Modal(
 #             [
@@ -83,7 +166,7 @@ CARD_TEXT_STYLE = {
 #             #    but the callback will be running still
 #         )
 
-layout = html.Div(
+viz_layout = html.Div(
     [
         html.Div(
             [
@@ -164,6 +247,13 @@ layout = html.Div(
     ]
 )
 
+# embedding the navigation bar
+app.layout = html.Div([
+    dcc.Location(id='url', refresh='callback-nav'),
+    navbar,
+    viz_layout,
+])
+
 # functions
 def process_data(data_file, std_file=None):
     df = pd.DataFrame()
@@ -194,138 +284,123 @@ def process_data(data_file, std_file=None):
         ],
 )
 def init_page(pathname):
-    global df1, df1_std, df2
+    global layout_config, df1, df1_std, df2
+    import json
+
+    # Load the JSON layout configuration file
+    with open('assets/data/layout.json', 'r') as file:
+        layout_config = json.load(file)
+
+    logging.debug(layout_config)
+
+    # Define file paths based on the layout configuration
+    config1 = layout_config[0]
+    config2 = layout_config[1]
 
     # df1
-    data_file = 'assets/data/LIVE-qPCR-Daily_Trend.tsv'
-    std_file = 'assets/data/LIVE-qPCR-Daily_Trend_std.tsv'
+    data_file = config1['plot_data_tsv']
+    std_file = config1['plot_std_tsv']
     df1 = process_data(data_file, std_file)
 
     # df2
-    data_file = 'assets/data/PPMoV-qPCR-Daily_Trend.tsv'
+    data_file = config2['plot_data_tsv']
     df2 = process_data(data_file)
 
     return df1['Fraction'].unique().tolist(), df1['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist()
 
 
-
+# Update figure 1 based on JSON configuration
 @callback(
-        Output('chart1-graph-id', 'figure'),
-        [
-            Input('chart1-f-id', 'value'),
-        ],
+    Output('chart1-graph-id', 'figure'),
+    [Input('chart1-f-id', 'value')],
 )
 def update_figure1(chart1_f):
-    global df1
+    global df1, layout_config
+
+    config1 = layout_config[0]
 
     logging.debug(f"[data][update_figure1] chart1_f: {chart1_f}")
 
-    # df1
     if chart1_f:
         idx = df1['Fraction'].isin(chart1_f)
     else:
         idx = df1['Date'].notna()
         
-
     fig = px.line(df1[idx], 
-                x='Date', 
-                y='Value', 
-                error_y="Value_std",
-                title='Concentration of SARS-CoV-2 in LANL wastewater', 
-                color='Fraction',
-                # width=900,
-                height=700,
-                template='ggplot2')
+                  x='Date', 
+                  y='Value', 
+                  error_y="Value_std",
+                  title=config1["plot_title"], 
+                  color='Fraction',
+                  height=700,
+                  template='ggplot2')
 
-    fig.update_layout(yaxis_title='SARS-CoV-2 Virions / L', xaxis_title='Date')
-
+    fig.update_layout(yaxis_title=config1["plot_yaxis_title"], xaxis_title=config1["plot_xaxis_title"])
     fig.update_xaxes(
         rangeselector=dict(
-            buttons=list([
+            buttons=[
                 dict(count=1, label="1M", step="month", stepmode="backward"),
                 dict(count=6, label="6M", step="month", stepmode="backward"),
                 dict(count=1, label="YTD", step="year", stepmode="todate"),
                 dict(count=1, label="1Y", step="year", stepmode="backward"),
                 dict(label="ALL", step="all")
-            ])
+            ]
         ),
-        rangeslider=dict(
-            visible=True,
-            # bgcolor="#636EFA",
-            thickness=0.1
-        ),
+        rangeslider=dict(visible=True, thickness=0.1),
         type="date"
     )
-
-    fig.update_traces(
-        error_y_color="#AAAAAA",
-        error_y_width=0.04,
-        mode="markers+lines",
-        hovertemplate=None
-    )
-
+    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines")
     fig.update_layout(hovermode="x unified")
 
     return fig
 
-    
-
+# Update figure 2 based on JSON configuration
 @callback(
-        Output('chart2-graph-id', 'figure'),
-        [
-            Input('chart2-f-id', 'value'),
-        ],
+    Output('chart2-graph-id', 'figure'),
+    [Input('chart2-f-id', 'value')],
 )
 def update_figure2(chart2_f):
-    global df2
+    global df2, layout_config
 
-    logging.debug(f"[data][data_check_url] triggered_id: {dash.callback_context.triggered_id}")
+    config2 = layout_config[1]
 
-    # df2
+    logging.debug(f"[data][update_figure2] chart2_f: {chart2_f}")
+
     if chart2_f:
         idx = df2['Fraction'].isin(chart2_f)
     else:
         idx = df2['Date'].notna()
-
+        
     fig = px.line(df2[idx], 
-                x='Date', 
-                y='Value', 
-                title='SARS-CoV-2 concentration normalized against the PMMoV concentration', 
-                color='Fraction',
-                # width=900,
-                height=700,
-                template='ggplot2')
+                  x='Date', 
+                  y='Value', 
+                  title=config2["plot_title"], 
+                  color='Fraction',
+                  height=700,
+                  template='ggplot2')
 
-    fig.update_layout(yaxis_title='SARS-CoV-2 Virions / L', xaxis_title='Date')
-
-
+    fig.update_layout(yaxis_title=config2["plot_yaxis_title"], xaxis_title=config2["plot_xaxis_title"])
     fig.update_xaxes(
-        # rangeslider_visible=True,
         rangeselector=dict(
-            buttons=list([
+            buttons=[
                 dict(count=1, label="1M", step="month", stepmode="backward"),
                 dict(count=6, label="6M", step="month", stepmode="backward"),
                 dict(count=1, label="YTD", step="year", stepmode="todate"),
                 dict(count=1, label="1Y", step="year", stepmode="backward"),
                 dict(label="ALL", step="all")
-            ])
+            ]
         ),
-        rangeslider=dict(
-            visible=True,
-            # bgcolor="#636EFA",
-            thickness=0.1
-        ),
+        rangeslider=dict(visible=True, thickness=0.1),
         type="date"
     )
-
-    fig.update_traces(
-        error_y_color="#AAAAAA",
-        error_y_width=0.04,
-        mode="markers+lines",
-        hovertemplate=None
-    )
-
+    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines")
     fig.update_layout(hovermode="x unified")
 
-
     return fig
+if __name__ == '__main__':
+    app.run_server(host="127.0.0.1", 
+                   port=8765,
+                   threaded=False,
+                   debug=False, 
+                   use_reloader=False
+                  )

@@ -1,0 +1,19 @@
+[
+    {
+        "title": "Concentration of SARS-CoV-2 in LANL wastewater",
+        "description": "Live qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "plot_data_tsv": "assets/data/LIVE-qPCR-Daily_Trend.tsv",
+        "plot_std_tsv": "assets/data/LIVE-qPCR-Daily_Trend_std.tsv",
+        "plot_title": "Concentration of SARS-CoV-2 in LANL wastewater",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "SARS-CoV-2 Virions / L"
+    },
+    {
+        "title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
+        "description": "PPMoV qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "plot_data_tsv": "assets/data/PPMoV-qPCR-Daily_Trend.tsv",
+        "plot_title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "SARS-CoV-2 Concentration / PMMoV Concentration"
+    }
+]

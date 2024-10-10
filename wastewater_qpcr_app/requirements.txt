@@ -1,0 +1,9 @@
+dash
+plotly
+pandas
+numpy
+matplotlib
+seaborn
+dash-bootstrap-components
+diskcache
+gunicorn

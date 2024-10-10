@@ -2,8 +2,7 @@ import dash
 from dash import dcc, html, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 from apps import wastewater_qpcr
-from uuid import uuid1
-import os
+
 import logging
 
 logging.basicConfig(
@@ -13,7 +12,6 @@ logging.basicConfig(
 )
 
 ref_url = 'index'
-launch_uid = str(uuid1())
 
 # external stylesheets
 external_stylesheets = [
@@ -27,6 +25,8 @@ app = dash.Dash(__name__,
     # background_callback_manager=background_callback_manager,
     # long_callback_manager=long_callback_manager,
 )
+
+server = app.server
 
 app.title = "Wastewater qPCR"
 # app._favicon = "favicon.ico"
@@ -107,11 +107,7 @@ app.layout = html.Div([
     ],
 )
 def display_page(pathname, search):
-
-    if pathname == '/' or pathname == '/#':
-        return wastewater_qpcr.layout
-    else:
-        return "404"
+    return wastewater_qpcr.layout
 
 # clientside_callback(
 #     """
