@@ -46,7 +46,7 @@ df2 = pd.DataFrame()
 
 SIDEBAR_STYLE = {
     'position': 'fixed',
-    'top': '4em',
+    'top': '4rem',
     'left': 0,
     'bottom': 0,
     "width": "18rem",
@@ -167,6 +167,13 @@ navbar = dbc.Navbar(
 
 viz_layout = html.Div(
     [
+        html.Div([
+                "Updated on ",
+                html.Span(id='update-time-id')
+            ],
+            style = {"padding": "2rem 1rem"},
+            className='text-sm-right'
+        ),
         html.Div(
             [
                 html.H4(
@@ -278,6 +285,7 @@ def process_data(data_file, std_file=None):
         Output('chart1-f-id', 'value'),
         Output('chart2-f-id', 'options'),
         Output('chart2-f-id', 'value'),
+        Output('update-time-id', 'children'),
         [
             Input('url', 'pathname'),
         ],
@@ -285,12 +293,15 @@ def process_data(data_file, std_file=None):
 def init_page(pathname):
     global layout_config, df1, df1_std, df2
     import json
+    import time
+
+    check_files = []
 
     # Load the JSON layout configuration file
-    with open('assets/data/layout.json', 'r') as file:
+    layout_config_file = 'assets/data/layout.json'
+    check_files.append(layout_config_file)
+    with open(layout_config_file, 'r') as file:
         layout_config = json.load(file)
-
-    logging.debug(layout_config)
 
     # Define file paths based on the layout configuration
     config1 = layout_config[0]
@@ -300,12 +311,30 @@ def init_page(pathname):
     data_file = config1['plot_data_tsv']
     std_file = config1['plot_std_tsv']
     df1 = process_data(data_file, std_file)
-
+ 
+    check_files.append(data_file)
+    check_files.append(std_file)
+ 
     # df2
     data_file = config2['plot_data_tsv']
     df2 = process_data(data_file)
 
-    return df1['Fraction'].unique().tolist(), df1['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist()
+    check_files.append(data_file)
+
+    # latest date
+    ti_m = 0
+    for path in check_files:
+        ti = os.path.getmtime(path)
+        if ti > ti_m:
+            ti_m = ti
+
+    m_ti = time.ctime(ti_m)
+
+    # Using the timestamp string to create a time object/structure
+    t_obj = time.strptime(m_ti)
+    T_stamp = time.strftime("%Y-%m-%d %H:%M:%S", t_obj)
+
+    return df1['Fraction'].unique().tolist(), df1['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), T_stamp
 
 
 # Update figure 1 based on JSON configuration
@@ -317,8 +346,6 @@ def update_figure1(chart1_f):
     global df1, layout_config
 
     config1 = layout_config[0]
-
-    logging.debug(f"[data][update_figure1] chart1_f: {chart1_f}")
 
     if chart1_f:
         idx = df1['Fraction'].isin(chart1_f)
@@ -363,8 +390,6 @@ def update_figure2(chart2_f):
 
     config2 = layout_config[1]
 
-    logging.debug(f"[data][update_figure2] chart2_f: {chart2_f}")
-
     if chart2_f:
         idx = df2['Fraction'].isin(chart2_f)
     else:
@@ -408,6 +433,6 @@ if __name__ == '__main__':
     app.run_server(host="127.0.0.1", 
                    port=8765,
                    threaded=False,
-                   debug=False, 
+                   debug=True, 
                    use_reloader=False
                   )
