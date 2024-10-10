@@ -30,11 +30,10 @@ app = dash.Dash(__name__,
     # long_callback_manager=long_callback_manager,
 )
 
-server = app.server
-
 app.title = "Wastewater qPCR"
 # app._favicon = "favicon.ico"
 
+server = app.server
 
 layout_config = {}
 
@@ -397,6 +396,14 @@ def update_figure2(chart2_f):
     fig.update_layout(hovermode="x unified")
 
     return fig
+
+@app.server.route('/healthz')
+def healthz():
+    # Perform any necessary health checks here
+    # For example, check database connectivity, etc.
+    # Return a 200 status code if everything is healthy
+    return 'OK', 200
+
 if __name__ == '__main__':
     app.run_server(host="127.0.0.1", 
                    port=8765,
