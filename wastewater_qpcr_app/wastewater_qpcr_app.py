@@ -282,8 +282,6 @@ def process_data(data_file, std_file=None):
         df_std.fillna(0, inplace=True)
         df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
 
-    logging.debug(df)
-
     return df
 
 # init
