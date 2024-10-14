@@ -264,18 +264,25 @@ app.layout = html.Div([
 def process_data(data_file, std_file=None):
     df = pd.DataFrame()
 
-    if os.path.exists(data_file):
+    try:
         df = pd.read_csv(data_file, sep='\t')
-        df = df.set_index('DATE').unstack().reset_index().rename(columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'})
-        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%y').dt.strftime('%Y-%m-%d')
+        df = df.set_index('DATE').unstack().reset_index().rename(
+            columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'}
+        )
+        df['Date'] = pd.to_datetime(df['Date'], format='mixed').dt.strftime('%Y-%m-%d')
         df.fillna(0, inplace=True)
+    except Exception as err:
+        print(data_file, err)
+        raise
 
     if std_file and os.path.exists(std_file):
         df_std = pd.read_csv(std_file, sep='\t')
         df_std = df_std.set_index('DATE').unstack().reset_index().rename(columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'})
-        df_std['Date'] = pd.to_datetime(df_std['Date'], format='%m/%d/%y').dt.strftime('%Y-%m-%d')
+        df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed').dt.strftime('%Y-%m-%d')
         df_std.fillna(0, inplace=True)
         df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
+
+    logging.debug(df)
 
     return df
 
