@@ -337,7 +337,8 @@ def init_page(pathname):
 
     # Using the timestamp string to create a time object/structure
     t_obj = time.strptime(m_ti)
-    T_stamp = time.strftime("%Y-%m-%d %H:%M:%S", t_obj)
+    os.environ["TZ"] = "MT"
+    T_stamp = time.strftime("%Y-%m-%d %H:%M:%S MT", t_obj)
 
     return df1['Fraction'].unique().tolist(), df1['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), T_stamp
 
