@@ -118,13 +118,9 @@ navbar = dbc.Navbar(
                 navbar=True,
             ),
             html.Div([
-                dcc.Dropdown(
-                    id="selected-uuid-id",
-                    options=[{'label': 'test', 'value': 'test'}],
-                    placeholder="Results selection",
-                    style={'width': '15rem'},
-                    className='small',
-                )],
+                    "Updated on ",
+                    html.Span(id='update-time-id')
+                ],
                 className='d-flex'
             ),
         ]
@@ -167,13 +163,13 @@ navbar = dbc.Navbar(
 
 viz_layout = html.Div(
     [
-        html.Div([
-                "Updated on ",
-                html.Span(id='update-time-id')
-            ],
-            style = {"padding": "2rem 1rem"},
-            className='text-sm-right'
-        ),
+        # html.Div([
+        #         "Updated on ",
+        #         html.Span(id='update-time-id')
+        #     ],
+        #     style = {"padding": "2rem 1rem"},
+        #     className='text-sm-right'
+        # ),
         html.Div(
             [
                 html.H4(
@@ -381,7 +377,7 @@ def update_figure1(chart1_f):
         rangeslider=dict(visible=True, thickness=0.1),
         type="date"
     )
-    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines")
+    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
     fig.update_layout(hovermode="x unified")
 
     return fig
@@ -423,7 +419,7 @@ def update_figure2(chart2_f):
         rangeslider=dict(visible=True, thickness=0.1),
         type="date"
     )
-    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines")
+    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
     fig.update_layout(hovermode="x unified")
 
     return fig
