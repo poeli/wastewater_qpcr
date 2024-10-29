@@ -2,13 +2,15 @@
 import pandas as pd
 import logging
 import os
+import json
+import time
 
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import dash
-from dash import dcc, html, State, Input, Output, set_props, Patch, no_update, callback, ctx
-import logging
+from dash import dcc, html, State, Input, Output, callback, ctx, Patch
 
+# Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -17,33 +19,22 @@ logging.basicConfig(
 
 ref_url = 'index'
 
-# external stylesheets
+# External stylesheets
 external_stylesheets = [
     dbc.themes.BOOTSTRAP, 
     dbc.icons.FONT_AWESOME,
 ]
 
+# Initialize Dash app
 app = dash.Dash(__name__, 
-    external_stylesheets = external_stylesheets,
-    suppress_callback_exceptions = True,
-    # background_callback_manager=background_callback_manager,
-    # long_callback_manager=long_callback_manager,
+    external_stylesheets=external_stylesheets,
+    suppress_callback_exceptions=True,
 )
 
 app.title = "Wastewater qPCR"
-# app._favicon = "favicon.ico"
-
 server = app.server
 
-layout_config = {}
-
-# loading
-# launch_uid = None
-# launch_uid = str(uuid1())
-df1 = pd.DataFrame()
-df1_std = pd.DataFrame()
-df2 = pd.DataFrame()
-
+# Define styles
 SIDEBAR_STYLE = {
     'position': 'fixed',
     'top': '4rem',
@@ -55,7 +46,6 @@ SIDEBAR_STYLE = {
     "overflow-y": "scroll",
 }
 
-# the style arguments for the main content page.
 CONTENT_STYLE = {
     'marginTop': '4rem',
     "marginLeft": "10rem",
@@ -73,32 +63,34 @@ CARD_TEXT_STYLE = {
     'color': '#0074D9'
 }
 
-
-# building the navigation bar
-dropdown = dbc.DropdownMenu(
-    id = "pathogen-menu-id",
-    children=[
-        dbc.DropdownMenuItem("SARS-CoV-2", href="/"),
-    ],
-    nav = True,
-    in_navbar = True,
-    label = "SARS-CoV-2",
+# Define navigation bar
+dropdown = dcc.Dropdown(
+        id="pathogen-menu-id",
+        className="me-2",
+        options=[
+            {'label': 'all pathogens', 'value': 'all pathogens'}
+        ],
+        value = 'all pathogens',
+        placeholder="all pathogens",
+        style={
+            "width": "15rem",       # Change dropdown width
+            "backgroundColor": "#222222",  # Dark dropdown background
+            "border": "0px solid #222222", # Dark border color
+        },
 )
 
 navbar = dbc.Navbar(
     dbc.Container(
         [
             html.A(
-                # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        # dbc.Col(html.Img(src="/assets/virus-solid-white.png", height="27px")),
                         dbc.Col([
                             html.Span([
-                                    html.I(className="fa-solid fa-droplet"),
-                                ],
-                                className="me-2",
-                                style={"font-size": "1.1rem", "color": "white"}
+                                html.I(className="fa-solid fa-droplet"),
+                            ],
+                            className="me-2",
+                            style={"font-size": "1.1rem", "color": "white"}
                             ),
                             dbc.NavbarBrand("LANL Wastewater", className="ml-1")
                         ]),
@@ -111,16 +103,15 @@ navbar = dbc.Navbar(
             dbc.NavbarToggler(id="navbar-toggler2"),
             dbc.Collapse(
                 dbc.Nav(
-                    # right align dropdown menu with ml-auto className
                     [dropdown], className="ml-auto", navbar=True
                 ),
                 id="navbar-collapse2",
                 navbar=True,
             ),
             html.Div([
-                    "Updated on ",
-                    html.Span(id='update-time-id')
-                ],
+                "Updated on ",
+                html.Span(id='update-time-id')
+            ],
                 className='d-flex'
             ),
         ]
@@ -130,133 +121,24 @@ navbar = dbc.Navbar(
     className='w-100 fixed-top container-fluid',
 )
 
-# # define the modal. In this case it only shows the progress bar and a cancel button
-# modal = dbc.Modal(
-#             [
-#                 dbc.ModalHeader(
-#                     dbc.ModalTitle("Running analysis"),
-#                     close_button=False
-#                     # ^^ important, otherwise the user can close the modal
-#                     #    but the callback will be running still
-#                 ),
-#                 dbc.ModalBody([
-#                     dbc.Progress(
-#                         value=0, id="modal-progress-bar-id", animated=True, striped=True
-#                     ),
-#                 ]),
-#                 dbc.ModalFooter(
-#                     dbc.Button(
-#                         "Cancel",
-#                         id="modal-cancel-analysis-btn-id",
-#                         className="ms-auto",
-#                         n_clicks=0
-#                     )
-#                 )
-#             ],
-#             id="modal-run-analysis-id",
-#             is_open=False,
-#             backdrop="static",
-#             keyboard=True
-#             # ^^ important, otherwise the user can close the modal via the ESC button
-#             #    but the callback will be running still
-#         )
+# Dynamically generate visualization layout based on layout_config
+viz_layout_children = []
+data_frames = {}  # To store data frames for each graph
+latest_update_times = []  # To track latest update times for all data files
+check_files = []
 
-viz_layout = html.Div(
-    [
-        # html.Div([
-        #         "Updated on ",
-        #         html.Span(id='update-time-id')
-        #     ],
-        #     style = {"padding": "2rem 1rem"},
-        #     className='text-sm-right'
-        # ),
-        html.Div(
-            [
-                html.H4(
-                    "Concentration of SARS-CoV-2 in LANL wastewater",
-                    className="mr-3",
-                    style={'display':'inline-block'}
-                ),
-                html.P(
-                    "Live qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through."
-                ),
-                html.Div([
-                    dbc.Row(
-                        [
-                            dbc.Col([
-                                        html.Span("Choose fraction"),
-                                        dcc.Dropdown(
-                                            id="chart1-f-id",
-                                            options=[],
-                                            searchable=False,
-                                            multi=True
-                                        ),
-                                    ],width=12, lg=11
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    dbc.Row(
-                        [
-                            dcc.Loading(dbc.Col(
-                                dcc.Graph(id="chart1-graph-id"), width=12, lg=12
-                            )),
-                        ],
-                    )],
-                    className="mt-3"
-                )
-            ],
-            style=CONTENT_STYLE
-        ),
-        html.Div(
-            [
-                html.H4(
-                    "SARS-CoV-2 concentration normalized against the PMMoV concentration",
-                    className="mr-3",
-                    style={'display':'inline-block'}
-                ),
-                html.P(
-                    "PPMoV qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through."
-                ),
-                html.Div([
-                    dbc.Row(
-                        [
-                            dbc.Col([
-                                        html.Span("Choose fraction"),
-                                        dcc.Dropdown(
-                                            id="chart2-f-id",
-                                            options=[],
-                                            searchable=False,
-                                            multi=True
-                                        ),
-                                    ],width=12, lg=11
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    dbc.Row(
-                        [
-                            dcc.Loading(dbc.Col(
-                                dcc.Graph(id="chart2-graph-id"), width=12, lg=12
-                            )),
-                        ],
-                    )],
-                    className="mt-1"
-                )
-            ],
-            style=CONTENT_STYLE
-        ),
-    ]
-)
+# Load layout configuration from JSON
+layout_config_file = 'assets/data/layout.json'
+try:
+    with open(layout_config_file, 'r') as file:
+        layout_config = json.load(file)
+    logging.info(f"Loaded layout configuration from {layout_config_file}")
+except Exception as e:
+    logging.error(f"Failed to load layout configuration: {e}")
+    layout_config = []
 
-# embedding the navigation bar
-app.layout = html.Div([
-    dcc.Location(id='url', refresh='callback-nav'),
-    navbar,
-    viz_layout,
-])
 
-# functions
+# Function to process data
 def process_data(data_file, std_file=None):
     df = pd.DataFrame()
 
@@ -268,162 +150,231 @@ def process_data(data_file, std_file=None):
         df['Date'] = pd.to_datetime(df['Date'], format='mixed').dt.strftime('%Y-%m-%d')
         df.fillna(0, inplace=True)
     except Exception as err:
-        print(data_file, err)
+        logging.error(f"Error processing data file {data_file}: {err}")
         raise
 
     if std_file and os.path.exists(std_file):
-        df_std = pd.read_csv(std_file, sep='\t')
-        df_std = df_std.set_index('DATE').unstack().reset_index().rename(columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'})
-        df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed').dt.strftime('%Y-%m-%d')
-        df_std.fillna(0, inplace=True)
-        df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
-
+        try:
+            df_std = pd.read_csv(std_file, sep='\t')
+            df_std = df_std.set_index('DATE').unstack().reset_index().rename(columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'})
+            df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed').dt.strftime('%Y-%m-%d')
+            df_std.fillna(0, inplace=True)
+            df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
+        except Exception as err:
+            logging.error(f"Error processing std file {std_file}: {err}")
+    
     return df
 
-# init
-@callback(
-        Output('chart1-f-id', 'options'),
-        Output('chart1-f-id', 'value'),
-        Output('chart2-f-id', 'options'),
-        Output('chart2-f-id', 'value'),
-        Output('update-time-id', 'children'),
-        [
-            Input('url', 'pathname'),
-        ],
-)
-def init_page(pathname):
-    global layout_config, df1, df1_std, df2
-    import json
-    import time
+for idx, config in enumerate(layout_config):
+    data_file = config['plot_data_tsv']
+    std_file = config.get('plot_std_tsv')
+    check_files.extend([data_file, std_file] if std_file else [data_file])
+    
+    # Process data
+    try:
+        df = process_data(data_file, std_file)
+        data_frames[idx] = df
+    except Exception as e:
+        logging.error(f"Failed to process data for graph {idx+1}: {e}")
 
-    check_files = []
+    # check if the data exist
+    if not idx in data_frames:
+        continue
+    
+    # Append each graph's layout to viz_layout_children
+    block_id = f"chart{idx+1}-block-id"
+    graph_id = f"chart{idx+1}-graph-id"
+    dropdown_id = f"chart{idx+1}-f-id"
 
-    # Load the JSON layout configuration file
-    layout_config_file = 'assets/data/layout.json'
-    check_files.append(layout_config_file)
-    with open(layout_config_file, 'r') as file:
-        layout_config = json.load(file)
-
-    # Define file paths based on the layout configuration
-    config1 = layout_config[0]
-    config2 = layout_config[1]
-
-    # df1
-    data_file = config1['plot_data_tsv']
-    std_file = config1['plot_std_tsv']
-    df1 = process_data(data_file, std_file)
- 
-    check_files.append(data_file)
-    check_files.append(std_file)
- 
-    # df2
-    data_file = config2['plot_data_tsv']
-    df2 = process_data(data_file)
-
-    check_files.append(data_file)
-
-    # latest date
-    ti_m = 0
-    for path in check_files:
-        ti = os.path.getmtime(path)
-        if ti > ti_m:
-            ti_m = ti
-
-    m_ti = time.ctime(ti_m)
-
-    # Using the timestamp string to create a time object/structure
-    t_obj = time.strptime(m_ti)
-    os.environ["TZ"] = "MT"
-    T_stamp = time.strftime("%Y-%m-%d %H:%M:%S MT", t_obj)
-
-    return df1['Fraction'].unique().tolist(), df1['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), df2['Fraction'].unique().tolist(), T_stamp
-
-
-# Update figure 1 based on JSON configuration
-@callback(
-    Output('chart1-graph-id', 'figure'),
-    [Input('chart1-f-id', 'value')],
-)
-def update_figure1(chart1_f):
-    global df1, layout_config
-
-    config1 = layout_config[0]
-
-    if chart1_f:
-        idx = df1['Fraction'].isin(chart1_f)
-    else:
-        idx = df1['Date'].notna()
-        
-    fig = px.line(df1[idx], 
-                  x='Date', 
-                  y='Value', 
-                  error_y="Value_std",
-                  title=config1["plot_title"], 
-                  color='Fraction',
-                  height=700,
-                  template='ggplot2')
-
-    fig.update_layout(yaxis_title=config1["plot_yaxis_title"], xaxis_title=config1["plot_xaxis_title"])
-    fig.update_xaxes(
-        rangeselector=dict(
-            buttons=[
-                dict(count=1, label="1M", step="month", stepmode="backward"),
-                dict(count=6, label="6M", step="month", stepmode="backward"),
-                dict(count=1, label="YTD", step="year", stepmode="todate"),
-                dict(count=1, label="1Y", step="year", stepmode="backward"),
-                dict(label="ALL", step="all")
-            ]
-        ),
-        rangeslider=dict(visible=True, thickness=0.1),
-        type="date"
+    viz_layout_children.append(
+        html.Div(
+            [
+                html.H4(
+                    config["title"],
+                    className="mr-3",
+                    style={'display':'inline-block'}
+                ),
+                html.P(
+                    config["description"]
+                ),
+                html.Div([
+                    dbc.Row(
+                        [
+                            dbc.Col([
+                                        html.Span("Choose fraction"),
+                                        dcc.Dropdown(
+                                            id=dropdown_id,
+                                            options=[],  # To be populated in callback
+                                            searchable=False,
+                                            multi=True
+                                        ),
+                                    ], width=12, lg=11
+                            ),
+                        ],
+                        className="mb-3",
+                    ),
+                    dbc.Row(
+                        [
+                            dcc.Loading(dbc.Col(
+                                dcc.Graph(id=graph_id), width=12, lg=12
+                            )),
+                        ],
+                    )],
+                    className="mt-3"
+                )
+            ],
+            id=block_id,
+            style=CONTENT_STYLE
+        )
     )
-    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
-    fig.update_layout(hovermode="x unified")
 
-    return fig
+# Define the overall layout
+app.layout = html.Div([
+    dcc.Location(id='url', refresh='callback-nav'),
+    navbar,
+    html.Div(viz_layout_children, id='graphs-container')
+])
+    
 
-# Update figure 2 based on JSON configuration
-@callback(
-    Output('chart2-graph-id', 'figure'),
-    [Input('chart2-f-id', 'value')],
+
+# Callback to initialize all dropdown options and set default values
+@app.callback(
+    Output('pathogen-menu-id', 'options'),
+    Input('url', 'pathname'),
 )
-def update_figure2(chart2_f):
-    global df2, layout_config
+def update_dropdown_menu(pathname):
+    global data_frames, layout_config
+    
+    options = [
+        {'label': 'all pathogens', 'value': 'all pathogens'}
+    ]
 
-    config2 = layout_config[1]
+    pathnames = []
 
-    if chart2_f:
-        idx = df2['Fraction'].isin(chart2_f)
+    for idx in data_frames:
+        config = layout_config[idx]
+        pathname = config['pathogen']
+        if pathname not in pathnames:
+            pathnames.append(pathname)
+            options.append({'label': pathname, 'value': pathname})
+    
+    return options
+
+# Callback to initialize all dropdown options and set default values
+@app.callback(
+    Output('update-time-id', 'children'),
+    *[
+        Output(f"chart{idx+1}-f-id", 'options') for idx in data_frames
+    ],
+    *[
+        Output(f"chart{idx+1}-f-id", 'value') for idx in data_frames
+    ],
+    *[
+        Output(f"chart{idx+1}-block-id", 'style') for idx in data_frames
+    ],
+    Input('pathogen-menu-id', 'value'),
+)
+def init_page(pathogen):
+    global data_frames, layout_config
+    
+    dropdown_options = []
+    dropdown_values = []
+    show_blocks = []
+    
+    for idx in data_frames:
+        config = layout_config[idx]
+        df = data_frames[idx]
+        fractions = df['Fraction'].unique().tolist()
+        dropdown_options.append([{'label': frac, 'value': frac} for frac in fractions])
+        dropdown_values.append(fractions)  # Set all fractions as default selected
+
+        style_patch = Patch()  # Initialize Patch object
+        if pathogen == 'all pathogens' or pathogen == config['pathogen']:
+            style_patch["display"] = "block"
+            show_blocks.append(style_patch)
+        else:
+            style_patch["display"] = "none"
+            show_blocks.append(style_patch)
+            
+    
+    # Determine the latest update time across all data files
+    latest_time = 0
+    for file in check_files:
+        if file and os.path.exists(file):
+            ti = os.path.getmtime(file)
+            if ti > latest_time:
+                latest_time = ti
+    
+    if latest_time:
+        t_obj = time.localtime(latest_time)
+        os.environ["TZ"] = "MT"
+        time_stamp = time.strftime("%Y-%m-%d %H:%M:%S MT", t_obj)
     else:
-        idx = df2['Date'].notna()
-        
-    fig = px.line(df2[idx], 
-                  x='Date', 
-                  y='Value', 
-                  title=config2["plot_title"], 
-                  color='Fraction',
-                  height=700,
-                  template='ggplot2')
+        time_stamp = "Unknown"
 
-    fig.update_layout(yaxis_title=config2["plot_yaxis_title"], xaxis_title=config2["plot_xaxis_title"])
-    fig.update_xaxes(
-        rangeselector=dict(
-            buttons=[
-                dict(count=1, label="1M", step="month", stepmode="backward"),
-                dict(count=6, label="6M", step="month", stepmode="backward"),
-                dict(count=1, label="YTD", step="year", stepmode="todate"),
-                dict(count=1, label="1Y", step="year", stepmode="backward"),
-                dict(label="ALL", step="all")
-            ]
-        ),
-        rangeslider=dict(visible=True, thickness=0.1),
-        type="date"
-    )
-    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
-    fig.update_layout(hovermode="x unified")
+    return [time_stamp] + dropdown_options + dropdown_values + show_blocks
 
-    return fig
+# Dynamically create callbacks for each graph based on layout_config
+for idx in data_frames:
+    config = layout_config[idx]
+    graph_id = f"chart{idx+1}-graph-id"
+    dropdown_id = f"chart{idx+1}-f-id"
 
+    def generate_callback(idx, config):
+        def update_figure(selected_fractions):
+            df = data_frames.get(idx)
+            if df is None:
+                return {}
+            
+            if selected_fractions:
+                mask = df['Fraction'].isin(selected_fractions)
+            else:
+                mask = df['Date'].notna()
+            
+            plot_data = df[mask]
+            fig = px.line(plot_data, 
+                          x='Date', 
+                          y='Value', 
+                          title=config["plot_title"], 
+                          color='Fraction',
+                          height=700,
+                          template='ggplot2')
+            
+            # Include error bars if 'plot_std_tsv' is present
+            if 'Value_std' in plot_data.columns:
+                fig.update_traces(error_y=dict(type='data', array=plot_data['Value_std'], visible=True))
+            
+            fig.update_layout(
+                yaxis_title=config["plot_yaxis_title"], 
+                xaxis_title=config["plot_xaxis_title"]
+            )
+            fig.update_xaxes(
+                rangeselector=dict(
+                    buttons=[
+                        dict(count=1, label="1M", step="month", stepmode="backward"),
+                        dict(count=6, label="6M", step="month", stepmode="backward"),
+                        dict(count=1, label="YTD", step="year", stepmode="todate"),
+                        dict(count=1, label="1Y", step="year", stepmode="backward"),
+                        dict(label="ALL", step="all")
+                    ]
+                ),
+                rangeslider=dict(visible=True, thickness=0.1),
+                type="date"
+            )
+            fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
+            fig.update_layout(hovermode="x unified")
+            
+            return fig
+
+        return callback(
+            Output(graph_id, 'figure'),
+            [Input(dropdown_id, 'value')],
+        )(update_figure)
+
+    # Register the callback for the current graph
+    generate_callback(idx, config)
+
+# Health check endpoint
 @app.server.route('/healthz')
 def healthz():
     # Perform any necessary health checks here
@@ -431,10 +382,11 @@ def healthz():
     # Return a 200 status code if everything is healthy
     return 'OK', 200
 
+# Run the server
 if __name__ == '__main__':
     app.run_server(host="127.0.0.1", 
                    port=8765,
                    threaded=False,
                    debug=True, 
                    use_reloader=False
-                  )
+    )
