@@ -73,7 +73,9 @@ dropdown = dcc.Dropdown(
         value = 'all pathogens',
         placeholder="all pathogens",
         style={
-            "width": "15rem",       # Change dropdown width
+            "font-size": "0.9rem",
+            "color": "#AAAAAA !important;",
+            "width": "10rem",       # Change dropdown width
             "backgroundColor": "#222222",  # Dark dropdown background
             "border": "0px solid #222222", # Dark border color
         },
@@ -289,7 +291,7 @@ def init_page(pathogen):
         dropdown_values.append(fractions)  # Set all fractions as default selected
 
         style_patch = Patch()  # Initialize Patch object
-        if pathogen == 'all pathogens' or pathogen == config['pathogen']:
+        if pathogen == 'all pathogens' or pathogen == config['pathogen'] or not pathogen:
             style_patch["display"] = "block"
             show_blocks.append(style_patch)
         else:
