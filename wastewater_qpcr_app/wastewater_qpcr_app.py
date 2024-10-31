@@ -23,6 +23,7 @@ ref_url = 'index'
 external_stylesheets = [
     dbc.themes.BOOTSTRAP, 
     dbc.icons.FONT_AWESOME,
+    'assets/styles.css'
 ]
 
 # Initialize Dash app
@@ -35,32 +36,11 @@ app.title = "Wastewater qPCR"
 server = app.server
 
 # Define styles
-SIDEBAR_STYLE = {
-    'position': 'fixed',
-    'top': '4rem',
-    'left': 0,
-    'bottom': 0,
-    "width": "18rem",
-    "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
-    "overflow-y": "scroll",
-}
-
 CONTENT_STYLE = {
     'marginTop': '4rem',
     "marginLeft": "10rem",
     "marginRight": "10rem",
     "padding": "2rem 1rem",
-}
-
-TEXT_STYLE = {
-    'textAlign': 'center',
-    'color': '#191970'
-}
-
-CARD_TEXT_STYLE = {
-    'textAlign': 'center',
-    'color': '#0074D9'
 }
 
 # Define navigation bar
@@ -70,15 +50,8 @@ dropdown = dcc.Dropdown(
         options=[
             {'label': 'all pathogens', 'value': 'all pathogens'}
         ],
-        value = 'all pathogens',
+        value='all pathogens',
         placeholder="all pathogens",
-        style={
-            "font-size": "0.9rem",
-            "color": "#AAAAAA !important;",
-            "width": "10rem",       # Change dropdown width
-            "backgroundColor": "#222222",  # Dark dropdown background
-            "border": "0px solid #222222", # Dark border color
-        },
 )
 
 navbar = dbc.Navbar(
@@ -113,7 +86,7 @@ navbar = dbc.Navbar(
             html.Div([
                 "Updated on ",
                 html.Span(id='update-time-id')
-            ],
+                ],
                 className='d-flex'
             ),
         ]
