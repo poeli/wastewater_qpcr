@@ -1,7 +1,14 @@
 #pathogen-menu-id .Select-value-label {
     color: #AAA;
-    font-size: "0.9rem";
+}
+
+#pathogen-menu-id .Select-control {
     width: 10rem;
+    font-size: 0.9rem;
     background-color: #222222;
     border: 0px solid #222222;
+}
+
+#pathogen-menu-id {
+    font-size: 0.8rem;
 }
