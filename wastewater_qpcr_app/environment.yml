@@ -13,3 +13,4 @@ dependencies:
   - seaborn
   - dash-bootstrap-components
   - diskcache
+  - gunicorn
