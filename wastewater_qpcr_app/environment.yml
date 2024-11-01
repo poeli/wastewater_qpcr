@@ -1,4 +1,4 @@
-name: rapter-env
+name: ww-env
 channels:
   - bioconda
   - conda-forge
