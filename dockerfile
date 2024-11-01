@@ -13,4 +13,4 @@ RUN pip install -r requirements.txt
 COPY wastewater_qpcr_app/ .
 
 # Set the entry point to run the application
-CMD gunicorn -b 0.0.0.0:8765 app:server
+CMD gunicorn -b 0.0.0.0:8765 wastewater_qpcr_app:server
