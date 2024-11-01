@@ -5,7 +5,7 @@
 ```
 cd wastewater_qpcr_app/
 conda env create -f environment.yml
-conda activate rapter-env
+conda activate ww-env
 python wastewater_qpcr_app.py
 ```
 
