@@ -281,9 +281,11 @@ def init_page(pathogen):
                 latest_time = ti
     
     if latest_time:
-        t_obj = time.localtime(latest_time)
-        os.environ["TZ"] = "MT"
-        time_stamp = time.strftime("%Y-%m-%d %H:%M:%S MT", t_obj)
+        import pytz
+        from datetime import timezone, datetime, timedelta
+        utc_dt = datetime.fromtimestamp(ti, tz=timezone.utc)
+        mt_timezone = pytz.timezone('America/Denver')
+        time_stamp = utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M:%S MT')
     else:
         time_stamp = "Unknown"
 
