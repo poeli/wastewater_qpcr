@@ -122,7 +122,8 @@ def process_data(data_file, std_file=None):
         df = df.set_index('DATE').unstack().reset_index().rename(
             columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'}
         )
-        df['Date'] = pd.to_datetime(df['Date'], format='mixed').dt.strftime('%Y-%m-%d')
+        df['Date'] = pd.to_datetime(df['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
+        df = df[df['Date'].notnull()].reset_index(drop=True)
         df.fillna(0, inplace=True)
     except Exception as err:
         logging.error(f"Error processing data file {data_file}: {err}")
@@ -132,7 +133,8 @@ def process_data(data_file, std_file=None):
         try:
             df_std = pd.read_csv(std_file, sep='\t')
             df_std = df_std.set_index('DATE').unstack().reset_index().rename(columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'})
-            df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed').dt.strftime('%Y-%m-%d')
+            df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
+            df_std = df_std[df_std['Date'].notnull()].reset_index(drop=True)
             df_std.fillna(0, inplace=True)
             df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
         except Exception as err:
