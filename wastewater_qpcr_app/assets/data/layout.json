@@ -27,5 +27,25 @@
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "Norovirus Virions / L",
         "pathogen": "Norovirus"
+    },
+    {
+        "title": "Concentration of Influenza A in LANL wastewater",
+        "description": "Live qPCR Daily Trend. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "plot_data_tsv": "assets/data/LIVE-flu-A.tsv",
+        "plot_std_tsv": "assets/data/LIVE-flu-A-std.tsv",
+        "plot_title": "Concentration of Influenza A in LANL wastewater",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "Influenza A Virions / L",
+        "pathogen": "Influenza A"
+    },
+    {
+        "title": "Concentration of Influenza B in LANL wastewater",
+        "description": "Live qPCR Daily Trend. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "plot_data_tsv": "assets/data/LIVE-flu-B.tsv",
+        "plot_std_tsv": "assets/data/LIVE-flu-B-std.tsv",
+        "plot_title": "Concentration of Influenza B in LANL wastewater",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "Influenza B Virions / L",
+        "pathogen": "Influenza B"
     }
 ]
