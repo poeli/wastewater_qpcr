@@ -30,7 +30,7 @@
     },
     {
         "title": "Concentration of Influenza A in LANL wastewater",
-        "description": "Live qPCR Daily Trend. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "Live qPCR Daily Trend. RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
         "plot_data_tsv": "assets/data/LIVE-flu-A.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-A-std.tsv",
         "plot_title": "Concentration of Influenza A in LANL wastewater",
@@ -40,7 +40,7 @@
     },
     {
         "title": "Concentration of Influenza B in LANL wastewater",
-        "description": "Live qPCR Daily Trend. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "Live qPCR Daily Trend. RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
         "plot_data_tsv": "assets/data/LIVE-flu-B.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-B-std.tsv",
         "plot_title": "Concentration of Influenza B in LANL wastewater",
