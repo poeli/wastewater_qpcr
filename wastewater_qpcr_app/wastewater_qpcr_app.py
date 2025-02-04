@@ -165,7 +165,7 @@ for idx, config in enumerate(layout_config):
     graph_id = f"chart{idx+1}-graph-id"
     dropdown_id = f"chart{idx+1}-f-id"
 
-    logging.info(f"Appending plots: {config["title"]}")
+    logging.info(f"Appending plots: {config['title']}")
 
     viz_layout_children.append(
         html.Div(
