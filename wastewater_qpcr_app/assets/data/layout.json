@@ -1,7 +1,7 @@
 [
     {
         "title": "Concentration of SARS-CoV-2 in LANL wastewater",
-        "description": "Live qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "There are two fractions (F1 and F3). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater taken from the same 24-hour composite sample used in Fraction 1.",
         "plot_data_tsv": "assets/data/LIVE-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/LIVE-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of SARS-CoV-2 in LANL wastewater",
@@ -11,7 +11,7 @@
     },
     {
         "title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
-        "description": "PPMoV qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "This is the signal of SARS-CoV-2 divided by the signal of pepper mild mottle virus, a commonly used human fecal indicator found in high abundance in wastewater and used as a way to normalize the SARS-CoV-2 signal.",
         "plot_data_tsv": "assets/data/PPMoV-qPCR-Daily_Trend.tsv",
         "plot_title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
         "plot_xaxis_title": "Date",
@@ -20,7 +20,7 @@
     },
     {
         "title": "Concentration of Norovirus in LANL wastewater",
-        "description": "Live qPCR Daily Trend. F1: RNA extracted from unconcentrated WW, just 1 ml of WW from the sample we collect that day. F2: RNA extracted from the pellet fraction from centrifuging WW. F3: RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "Data collected from the Fraction 3 sample only.",
         "plot_data_tsv": "assets/data/Norovirus-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/Norovirus-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of Norovirus in LANL wastewater",
@@ -30,7 +30,7 @@
     },
     {
         "title": "Concentration of Influenza A in LANL wastewater",
-        "description": "Live qPCR Daily Trend. RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "Data collected from the Fraction 3 sample only.",
         "plot_data_tsv": "assets/data/LIVE-flu-A.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-A-std.tsv",
         "plot_title": "Concentration of Influenza A in LANL wastewater",
@@ -40,7 +40,7 @@
     },
     {
         "title": "Concentration of Influenza B in LANL wastewater",
-        "description": "Live qPCR Daily Trend. RNA extracted from the filter that the supernatant from centrifuging WW passed through.",
+        "description": "Data collected from the Fraction 3 sample only.",
         "plot_data_tsv": "assets/data/LIVE-flu-B.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-B-std.tsv",
         "plot_title": "Concentration of Influenza B in LANL wastewater",
