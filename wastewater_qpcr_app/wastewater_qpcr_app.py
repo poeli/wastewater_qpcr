@@ -125,6 +125,7 @@ def process_data(data_file, std_file=None):
         df['Date'] = pd.to_datetime(df['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
         df = df[df['Date'].notnull()].reset_index(drop=True)
         df.fillna(0, inplace=True)
+        logging.info(f"Processed data: {data_file} {df.shape} {df.tail()}")
     except Exception as err:
         logging.error(f"Error processing data file {data_file}: {err}")
         raise
@@ -137,6 +138,7 @@ def process_data(data_file, std_file=None):
             df_std = df_std[df_std['Date'].notnull()].reset_index(drop=True)
             df_std.fillna(0, inplace=True)
             df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
+            logging.info(f"Processed data: {std_file} {df.shape} {df.tail()}")
         except Exception as err:
             logging.error(f"Error processing std file {std_file}: {err}")
     
@@ -162,6 +164,8 @@ for idx, config in enumerate(layout_config):
     block_id = f"chart{idx+1}-block-id"
     graph_id = f"chart{idx+1}-graph-id"
     dropdown_id = f"chart{idx+1}-f-id"
+
+    logging.info(f"Appending plots: {config["title"]}")
 
     viz_layout_children.append(
         html.Div(
