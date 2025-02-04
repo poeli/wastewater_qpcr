@@ -158,6 +158,7 @@ for idx, config in enumerate(layout_config):
 
     # check if the data exist
     if not idx in data_frames:
+        logging.error(f"Skipping config {idx+1}")
         continue
     
     # Append each graph's layout to viz_layout_children
@@ -317,15 +318,12 @@ for idx in data_frames:
             plot_data = df[mask]
             fig = px.line(plot_data, 
                           x='Date', 
-                          y='Value', 
+                          y='Value',
+                          error_y=('Value_std' if 'Value_std' in plot_data.columns else None),
                           title=config["plot_title"], 
                           color='Fraction',
                           height=700,
                           template='ggplot2')
-            
-            # Include error bars if 'plot_std_tsv' is present
-            if 'Value_std' in plot_data.columns:
-                fig.update_traces(error_y=dict(type='data', array=plot_data['Value_std'], visible=True))
             
             fig.update_layout(
                 yaxis_title=config["plot_yaxis_title"], 
