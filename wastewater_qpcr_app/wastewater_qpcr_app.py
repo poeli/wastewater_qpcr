@@ -291,7 +291,7 @@ def init_page(pathogen):
         from datetime import timezone, datetime, timedelta
         utc_dt = datetime.fromtimestamp(ti, tz=timezone.utc)
         mt_timezone = pytz.timezone('America/Denver')
-        time_stamp = utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M:%S MT')
+        time_stamp = utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M MT') + ' updated'
     else:
         time_stamp = "Unknown"
 
