@@ -38,8 +38,7 @@ server = app.server
 # Define styles
 CONTENT_STYLE = {
     'marginTop': '4rem',
-    "marginLeft": "10rem",
-    "marginRight": "10rem",
+    'maxWidth': '80rem',
     "padding": "2rem 1rem",
 }
 
@@ -84,16 +83,15 @@ navbar = dbc.Navbar(
                 navbar=True,
             ),
             html.Div([
-                "Updated on ",
                 html.Span(id='update-time-id')
                 ],
-                className='d-flex'
+                className='d-flex fs-6'
             ),
         ]
     ),
     color="dark",
     dark=True,
-    className='w-100 fixed-top container-fluid',
+    className='fixed-top container-fluid',
 )
 
 # Dynamically generate visualization layout based on layout_config
@@ -125,7 +123,7 @@ def process_data(data_file, std_file=None):
         df['Date'] = pd.to_datetime(df['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
         df = df[df['Date'].notnull()].reset_index(drop=True)
         df.fillna(0, inplace=True)
-        logging.info(f"Processed data: {data_file} {df.shape} {df.tail()}")
+        logging.debug(f"Processed data: {data_file} {df.shape} {df.tail()}")
     except Exception as err:
         logging.error(f"Error processing data file {data_file}: {err}")
         raise
@@ -206,6 +204,7 @@ for idx, config in enumerate(layout_config):
                 )
             ],
             id=block_id,
+            className='mx-lg-auto',
             style=CONTENT_STYLE
         )
     )

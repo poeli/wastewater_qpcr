@@ -9,6 +9,6 @@
     border: 0px solid #222222;
 }
 
-#pathogen-menu-id {
+#pathogen-menu-id, #update-time-id {
     font-size: 0.8rem;
 }
