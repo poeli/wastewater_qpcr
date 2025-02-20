@@ -259,7 +259,7 @@ for idx, config in enumerate(layout_config):
             dbc.CardBody(
                 [
                     html.P([trend_badge_6m, trend_badge_1m]),
-                    html.P(f"Using the Mann-Kendall trend test on the {config["title"]} F3 data, with the significance level of 0.5, the p-value of {pval_1m:.3} and the Kendall's Tau of {tau_1m:.3}.", style={"font-size": "0.7rem"}),
+                    html.P(f"Using the Mann-Kendall trend test on the {config['title']} F3 data, with the significance level of 0.5, the p-value of {pval_1m:.3} and the Kendall's Tau of {tau_1m:.3}.", style={"font-size": "0.7rem"})
                 ]
             )
         ],
