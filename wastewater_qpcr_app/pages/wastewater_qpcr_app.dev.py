@@ -22,7 +22,7 @@ dash.register_page(__name__, path='/dev/')
 # Define styles
 CONTENT_STYLE = {
     'marginTop': '1rem',
-    'maxWidth': '80rem',
+    # 'maxWidth': '80rem',
     "padding": "0rem 1rem",
 }
 
@@ -58,18 +58,17 @@ navbar = dbc.Navbar(
                 href="/",
                 className="text-decoration-none"
             ),
-            dbc.NavbarToggler(id="navbar-toggler2"),
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
             dbc.Collapse(
-                dbc.Nav(
-                    [dropdown], className="ml-auto", navbar=True
-                ),
-                id="navbar-collapse2",
+                dropdown,
+                id="navbar-collapse",
+                is_open=False,
                 navbar=True,
             ),
             html.Div([
                 html.Span(id='update-time-id')
-            ],
-            className='d-flex fs-6'
+                ],
+                className='d-flex fs-6'
             ),
         ]
     ),
@@ -137,14 +136,14 @@ def update_figure(plot_data):
                     x='Date', 
                     y='Value',
                     error_y=('Value_std' if 'Value_std' in plot_data.columns else None),
-                    title=config["plot_title"], 
+                    # title=config["plot_title"], 
                     color='Fraction',
                     height=700,
                     template='ggplot2')
     fig.update_layout(
         yaxis_title=config["plot_yaxis_title"], 
         xaxis_title=config["plot_xaxis_title"],
-        xaxis_range=[min_date, max_date]  # Set default view to last 6 months
+        xaxis_range=[min_date, max_date],  # Set default view to last 6 months
     )
     fig.update_xaxes(
         rangeselector=dict(
@@ -278,12 +277,12 @@ layout = dbc.Container([
     dbc.Row([
         dbc.Col(
             html.Div(trend_cards),
-            width=2,
+            xs=12, md=3, lg=2,  # Responsive widths
             style={"marginTop": "5rem", "paddingLeft": "2rem"}
         ),
         dbc.Col(
             html.Div(viz_layout_children),
-            width=10,
+            xs=12, md=9, lg=10,  # Responsive widths
             style={"marginTop": "5rem"}
         )
     ])
@@ -364,6 +363,17 @@ def update_time(pathogen):
 
     return time_stamp
 
+
+# add callback for toggling the collapse on small screens
+@callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
 # Run the server
 if __name__ == '__main__':
