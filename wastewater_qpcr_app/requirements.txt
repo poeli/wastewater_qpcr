@@ -7,3 +7,4 @@ seaborn
 dash-bootstrap-components
 diskcache
 gunicorn
+pymannkendall
