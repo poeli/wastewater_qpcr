@@ -47,5 +47,25 @@
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "Influenza B Virions / L",
         "pathogen": "Influenza B"
+    },
+    {
+        "title": "Concentration of H5N1 in LANL wastewater",
+        "description": "Data collected from the PEG precipitated samples only. There is no data for this assay prior to February 25, 2025.",
+        "plot_data_tsv": "assets/data/H5N1-qPCR-Daily_Trend.tsv",
+        "plot_std_tsv": "assets/data/H5N1-qPCR-Daily_Trend_std.tsv",
+        "plot_title": "Concentration of H5N1 in LANL wastewater",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "H5N1 Virions / L",
+        "pathogen": "H5N1"
+    },
+    {
+        "title": "Concentration of Measles virus in LANL wastewater",
+        "description": "Data collected from the PEG precipitated samples only. There is no data for this assay prior to February 25, 2025.",
+        "plot_data_tsv": "assets/data/MEv-qPCR-Daily_Trend.tsv",
+        "plot_std_tsv": "assets/data/MEv-qPCR-Daily_Trend_std.tsv",
+        "plot_title": "Concentration of Measles virus in LANL wastewater",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "MEv Virions / L",
+        "pathogen": "Measles"
     }
 ]
