@@ -1,7 +1,7 @@
 [
     {
         "title": "Concentration of SARS-CoV-2 in LANL wastewater",
-        "description": "There are two fractions (F1 and F3). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater taken from the same 24-hour composite sample used in Fraction 1.",
+        "description": "There are two fractions (F1 and F3/PEG). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater. PEG (beginning February 25, 2025) is RNA extracted from 150 mL wastewater after 10% PEG 0.9% NaCl precipitation.",
         "plot_data_tsv": "assets/data/LIVE-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/LIVE-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of SARS-CoV-2 in LANL wastewater",
@@ -11,7 +11,7 @@
     },
     {
         "title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
-        "description": "This is the signal of SARS-CoV-2 divided by the signal of pepper mild mottle virus, a commonly used human fecal indicator found in high abundance in wastewater and used as a way to normalize the SARS-CoV-2 signal.",
+        "description": "This is the signal of SARS-CoV-2 divided by the signal of pepper mild mottle virus, a commonly used human fecal indicator found in high abundance in wastewater and used as a way to normalize the SARS-CoV-2 signal. Prior to Febrary 25, 2025, Fractions 1 and 3 were normalized against PMMoV, and beginning February 25, 2025, only Fraction 1 was normalized against PMMoV.",
         "plot_data_tsv": "assets/data/PPMoV-qPCR-Daily_Trend.tsv",
         "plot_title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
         "plot_xaxis_title": "Date",
@@ -20,7 +20,7 @@
     },
     {
         "title": "Concentration of Norovirus in LANL wastewater",
-        "description": "Data collected from the Fraction 3 sample only.",
+        "description": "Data collected from the Fraction 3 and PEG precipitated samples only. Data prior to Febrary 25, 2025 was collected from Fraction 3. Data beginning Febrary 25, 2025 was collected from PEG precipitated samples only.",
         "plot_data_tsv": "assets/data/Norovirus-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/Norovirus-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of Norovirus in LANL wastewater",
@@ -30,7 +30,7 @@
     },
     {
         "title": "Concentration of Influenza A in LANL wastewater",
-        "description": "Data collected from the Fraction 3 sample only.",
+        "description": "Data collected from the Fraction 3 and PEG precipitated samples only. Data prior to Febrary 25, 2025 was collected from Fraction 3. Data beginning Febrary 25, 2025 was collected from PEG precipitated samples only.",
         "plot_data_tsv": "assets/data/LIVE-flu-A.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-A-std.tsv",
         "plot_title": "Concentration of Influenza A in LANL wastewater",
@@ -40,7 +40,7 @@
     },
     {
         "title": "Concentration of Influenza B in LANL wastewater",
-        "description": "Data collected from the Fraction 3 sample only.",
+        "description": "Data collected from the Fraction 3 and PEG precipitated samples only. Data prior to Febrary 25, 2025 was collected from Fraction 3. Data beginning Febrary 25, 2025 was collected from PEG precipitated samples only.",
         "plot_data_tsv": "assets/data/LIVE-flu-B.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-B-std.tsv",
         "plot_title": "Concentration of Influenza B in LANL wastewater",
