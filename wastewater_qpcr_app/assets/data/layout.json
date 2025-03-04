@@ -1,7 +1,7 @@
 [
     {
         "title": "Concentration of SARS-CoV-2 in LANL wastewater",
-        "description": "There are two fractions (F1 and F3/PEG). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater. PEG (beginning February 25, 2025) is RNA extracted from 150 mL wastewater after 10% PEG 0.9% NaCl precipitation.",
+        "description": "There are two fractions (F1 and F3/PEG). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater. PEG (beginning February 25, 2025) is RNA extracted from 150 mL wastewater after 10% PEG 0.9% NaCl (w/v) precipitation.",
         "plot_data_tsv": "assets/data/LIVE-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/LIVE-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of SARS-CoV-2 in LANL wastewater",
