@@ -8,7 +8,7 @@ import time
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import dash
-from dash import dcc, html, State, Input, Output, callback, ctx, Patch
+from dash import dcc, html, State, Input, Output, callback, ctx, Patch, no_update, ALL
 
 # Configure logging
 logging.basicConfig(
@@ -21,20 +21,221 @@ dash.register_page(__name__, path='/')
 
 # Define styles
 CONTENT_STYLE = {
-    'marginTop': '4rem',
-    'maxWidth': '80rem',
-    "padding": "2rem 1rem",
+    'marginTop': '1rem',
+    # 'maxWidth': '80rem',
+    "padding": "0rem 1rem",
 }
 
+# Containers for graph layouts and data frames
+viz_layout_children = []
+data_frames = {}  # To store data frames for each graph
+check_files = []
+
+# Load layout configuration from JSON
+layout_config_file = 'assets/data/layout.json'
+try:
+    with open(layout_config_file, 'r') as file:
+        layout_config = json.load(file)
+    logging.info(f"Loaded layout configuration from {layout_config_file}")
+except Exception as e:
+    logging.error(f"Failed to load layout configuration: {e}")
+    layout_config = []
+
+# Function to process data files
+def process_data(data_file, std_file=None):
+    df = pd.DataFrame()
+    logging.debug(f"process_data: data_file={data_file}, std_file={std_file}")  # ADDED
+    try:
+        df = pd.read_csv(data_file, sep='\t')
+        df = df.set_index('DATE').unstack().reset_index().rename(
+            columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'}
+        )
+        df['Date'] = pd.to_datetime(df['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
+        df = df[df['Date'].notnull()].reset_index(drop=True)
+        df.fillna(0, inplace=True)
+        logging.debug(f"Processed data: {data_file} {df.shape} {df.tail()}")
+    except Exception as err:
+        logging.error(f"Error processing data file {data_file}: {err}")
+        raise
+
+    if std_file and os.path.exists(std_file):
+        try:
+            df_std = pd.read_csv(std_file, sep='\t')
+            df_std = df_std.set_index('DATE').unstack().reset_index().rename(
+                columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'}
+            )
+            df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
+            df_std = df_std[df_std['Date'].notnull()].reset_index(drop=True)
+            df_std.fillna(0, inplace=True)
+            df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
+            logging.info(f"Processed std data: {std_file} {df.shape} {df.tail()}")
+        except Exception as err:
+            logging.error(f"Error processing std file {std_file}: {err}")
+    
+    return df
+
+# Function to generate figure
+def update_figure(plot_data):
+    
+    # Calculate date range for x-axis
+    max_date = pd.to_datetime(plot_data['Date']).max() + pd.DateOffset(weeks=1)
+    min_date = pd.to_datetime(plot_data['Date']).min() - pd.DateOffset(weeks=1)
+    
+    fig = px.line(plot_data, 
+                    x='Date',
+                    y='Value',
+                    error_y=('Value_std' if 'Value_std' in plot_data.columns else None),
+                    # title=config["plot_title"], 
+                    color='Fraction',
+                    height=700,
+                    template='ggplot2')
+    fig.update_layout(
+        yaxis_title=config["plot_yaxis_title"], 
+        xaxis_title=config["plot_xaxis_title"],
+        xaxis_range=[min_date, max_date],  # Set default view to last 6 months
+    )
+    fig.update_xaxes(
+        rangeselector=dict(
+            buttons=[
+                dict(count=1, label="1M", step="month", stepmode="backward"),
+                dict(count=6, label="6M", step="month", stepmode="backward"),
+                dict(count=1, label="YTD", step="year", stepmode="todate"),
+                dict(count=1, label="1Y", step="year", stepmode="backward"),
+                dict(label="ALL", step="all")
+            ]
+        ),
+        rangeslider=dict(visible=True, thickness=0.1),
+        type="date"
+    )
+    fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
+    fig.update_layout(hovermode="x unified")
+
+    return fig
+
+
+# Process each configuration's data and build graph layout blocks
+for idx, config in enumerate(layout_config):
+    data_file = config['plot_data_tsv']
+    std_file = config.get('plot_std_tsv')
+    check_files.extend([data_file, std_file] if std_file else [data_file])
+    
+    try:
+        df = process_data(data_file, std_file)
+        data_frames[idx] = df
+    except Exception as e:
+        logging.error(f"Failed to process data for graph {idx+1}: {e}")
+
+    # Skip if no data is available
+    if idx not in data_frames:
+        logging.error(f"Skipping config {idx+1}")
+        continue
+    
+    # Generate figure
+    fig = update_figure(df)
+
+    # Build graph block
+    block_id = f"chart{idx+1}-block-id"
+    graph_id = f"chart{idx+1}-graph-id"
+
+    logging.info(f"Appending plot: {config['title']}")
+
+    viz_layout_children.append(
+        html.Div(
+            [
+                html.H4(
+                    config["title"],
+                    className="mr-3",
+                    style={'display':'inline-block'}
+                ),
+                html.P(config["description"]),
+                html.Div([
+                    dbc.Row(
+                        [
+                            dcc.Loading(dbc.Col(
+                                dcc.Graph(id=graph_id, figure=fig), width=12, lg=12
+                            )),
+                        ],
+                    )
+                ], className="mb-3")
+            ],
+            id=block_id,
+            className='mx-lg-auto',
+            style=CONTENT_STYLE
+        )
+    )
+
+# ---------------------------
+# Create Trend Cards (Left Sidebar)
+# ---------------------------
+# Define mapping of trend to Bootstrap badge color:
+trend_badge_color = {"increasing": "danger", "decreasing": "success", "stable": "warning"}
+
+trend_cards = []
+for idx, config in enumerate(layout_config):
+    if 'analysis' in config:
+        # determine badge color based on trend
+        badge_color = "warning"
+
+        for trend_text in trend_badge_color:
+            if trend_text in config['analysis']['trend']:
+                badge_color = trend_badge_color[trend_text]
+                break
+
+        # Use dbc.Badge to display the trend with a colored background
+        trend_badge = dbc.Badge(f"Trend: {config['analysis']['trend']}", color=badge_color, className="ms-1")
+
+        card = dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H6(config["pathogen"], className="card-title"),
+                    html.P(trend_badge),
+                    html.P(config['analysis']['description'], style={"font-size": "0.8rem"}),
+                    dbc.CardLink("Click here for more details...", 
+                                 id=f"trend-figure-link{idx+1}",
+                                 href="#", 
+                                 style={"font-size": "0.8rem", "color": "gray"})
+                ]
+            ),
+            className="mb-3 trend-card",
+            style={},
+            id=f"trend-card{idx+1}"
+        )
+        trend_cards.append(card)
+    else:
+        continue
+
+
+modal = html.Div(
+    [
+        dbc.Modal(
+            id="trend-modal",
+            size="xl",
+            centered=True,
+            is_open=False,
+        )
+    ]
+)
+
+# ---------------------------
+# Nav bar (top bar)
+# ---------------------------
+
+options = [{'label': 'all pathogens', 'value': 'all pathogens'}]
+pathnames = []
+for idx in data_frames:
+    config = layout_config[idx]
+    path_val = config['pathogen']
+    if path_val not in pathnames:
+        pathnames.append(path_val)
+        options.append({'label': path_val, 'value': path_val})
+        
 # Define navigation bar
 dropdown = dcc.Dropdown(
-        id="pathogen-menu-id",
-        className="me-2",
-        options=[
-            {'label': 'all pathogens', 'value': 'all pathogens'}
-        ],
-        value='all pathogens',
-        placeholder="all pathogens",
+    id="pathogen-menu-id",
+    className="me-2",
+    options=options,
+    value='all pathogens',
+    placeholder="all pathogens",
 )
 
 navbar = dbc.Navbar(
@@ -58,12 +259,11 @@ navbar = dbc.Navbar(
                 href="/",
                 className="text-decoration-none"
             ),
-            dbc.NavbarToggler(id="navbar-toggler2"),
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
             dbc.Collapse(
-                dbc.Nav(
-                    [dropdown], className="ml-auto", navbar=True
-                ),
-                id="navbar-collapse2",
+                dropdown,
+                id="navbar-collapse",
+                is_open=False,
                 navbar=True,
             ),
             html.Div([
@@ -78,179 +278,66 @@ navbar = dbc.Navbar(
     className='fixed-top container-fluid',
 )
 
-# Dynamically generate visualization layout based on layout_config
-viz_layout_children = []
-data_frames = {}  # To store data frames for each graph
-latest_update_times = []  # To track latest update times for all data files
-check_files = []
 
-# Load layout configuration from JSON
-layout_config_file = 'assets/data/layout.json'
-try:
-    with open(layout_config_file, 'r') as file:
-        layout_config = json.load(file)
-    logging.info(f"Loaded layout configuration from {layout_config_file}")
-except Exception as e:
-    logging.error(f"Failed to load layout configuration: {e}")
-    layout_config = []
-
-logging.debug(f"layout_config: {layout_config}")  # ADDED
-logging.debug(f"data_frames: {data_frames}")  # ADDED
-
-# Function to process data
-def process_data(data_file, std_file=None):
-    df = pd.DataFrame()
-
-    try:
-        df = pd.read_csv(data_file, sep='\t')
-        df = df.set_index('DATE').unstack().reset_index().rename(
-            columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'}
-        )
-        df['Date'] = pd.to_datetime(df['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
-        df = df[df['Date'].notnull()].reset_index(drop=True)
-        df.fillna(0, inplace=True)
-        logging.debug(f"Processed data: {data_file} {df.shape} {df.tail()}")
-    except Exception as err:
-        logging.error(f"Error processing data file {data_file}: {err}")
-        raise
-
-    if std_file and os.path.exists(std_file):
-        try:
-            df_std = pd.read_csv(std_file, sep='\t')
-            df_std = df_std.set_index('DATE').unstack().reset_index().rename(columns={'DATE': 'Fraction', 'level_0': 'Date', 0: 'Value'})
-            df_std['Date'] = pd.to_datetime(df_std['Date'], format='mixed', errors='coerce').dt.strftime('%Y-%m-%d')
-            df_std = df_std[df_std['Date'].notnull()].reset_index(drop=True)
-            df_std.fillna(0, inplace=True)
-            df = df.merge(df_std, on=['Date', 'Fraction'], how='left', suffixes=('', '_std'))
-            logging.info(f"Processed data: {std_file} {df.shape} {df.tail()}")
-        except Exception as err:
-            logging.error(f"Error processing std file {std_file}: {err}")
-    
-    return df
-
-for idx, config in enumerate(layout_config):
-    data_file = config['plot_data_tsv']
-    std_file = config.get('plot_std_tsv')
-    check_files.extend([data_file, std_file] if std_file else [data_file])
-    
-    # Process data
-    try:
-        df = process_data(data_file, std_file)
-        data_frames[idx] = df
-    except Exception as e:
-        logging.error(f"Failed to process data for graph {idx+1}: {e}")
-
-    # check if the data exist
-    if not idx in data_frames:
-        logging.error(f"Skipping config {idx+1}")
-        continue
-    
-    # Append each graph's layout to viz_layout_children
-    block_id = f"chart{idx+1}-block-id"
-    graph_id = f"chart{idx+1}-graph-id"
-    dropdown_id = f"chart{idx+1}-f-id"
-
-    logging.info(f"Appending plots: {config['title']}")
-    logging.debug(f"Creating dropdown with id: {dropdown_id}")  # ADDED
-
-    viz_layout_children.append(
-        html.Div(
-            [
-                html.H4(
-                    config["title"],
-                    className="mr-3",
-                    style={'display':'inline-block'}
-                ),
-                html.P(
-                    config["description"]
-                ),
-                html.Div([
-                    dbc.Row(
-                        [
-                            dbc.Col([
-                                        html.Span("Choose fraction"),
-                                        dcc.Dropdown(
-                                            id=dropdown_id,
-                                            options=[],  # To be populated in callback
-                                            searchable=False,
-                                            multi=True
-                                        ),
-                                    ], width=12, lg=11
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    dbc.Row(
-                        [
-                            dcc.Loading(dbc.Col(
-                                dcc.Graph(id=graph_id), width=12, lg=12
-                            )),
-                        ],
-                    )],
-                    className="mt-3"
-                )
-            ],
-            id=block_id,
-            className='mx-lg-auto',
-            style=CONTENT_STYLE
-        )
-    )
-
-# Define the overall layout
-layout = html.Div([
+# ---------------------------
+# Define the Overall Layout with Two Columns
+# ---------------------------
+layout = dbc.Container([
     dcc.Location(id='url', refresh='callback-nav'),
+    modal,
     navbar,
-    html.Div(viz_layout_children, id='graphs-container')
-])
-    
+    dbc.Row([
+        dbc.Col(
+            html.Div(trend_cards),
+            xs=12, md=3, lg=2,  # Responsive widths
+            style={"marginTop": "5rem", "paddingLeft": "2rem"}
+        ),
+        dbc.Col(
+            html.Div(viz_layout_children),
+            xs=12, md=9, lg=10,  # Responsive widths
+            style={"marginTop": "5rem"}
+        )
+    ])
+], fluid=True)
 
+# ---------------------------
+# Callbacks
+# ---------------------------
 
-# Callback to initialize all dropdown options and set default values
+# Callback to initialize chart dropdowns and update block display based on pathogen selection
 @callback(
-    Output('pathogen-menu-id', 'options', allow_duplicate=True),
-    Output('update-time-id', 'children', allow_duplicate=True),
-    *[Output(f"chart{idx+1}-f-id", 'options') for idx in data_frames],
-    *[Output(f"chart{idx+1}-f-id", 'value') for idx in data_frames],
-    *[Output(f"chart{idx+1}-block-id", 'style') for idx in data_frames],
+    *[Output(f"trend-card{idx+1}", 'style', allow_duplicate=True) for idx in range(len(layout_config)) if 'analysis' in layout_config[idx]],
+    *[Output(f"chart{idx+1}-block-id", 'style', allow_duplicate=True) for idx in data_frames],
     Input('pathogen-menu-id', 'value'),
-    Input('url', 'pathname'),
     prevent_initial_call=True
 )
-def init_page(pathogen, pathname):
+def init_page(pathogen):
     global data_frames, layout_config
-    
-    # Update dropdown menu options
-    pathnames = []
-    pathogen_options = [
-        {'label': 'all pathogens', 'value': 'all pathogens'}
-    ]
-    for idx in data_frames:
-        config = layout_config[idx]
-        pathname = config['pathogen']
-        if pathname not in pathnames:
-            pathnames.append(pathname)
-            pathogen_options.append({'label': pathname, 'value': pathname})
-    
-    dropdown_options = []
-    dropdown_values = []
+    graphs = []
     show_blocks = []
-    
+
     for idx in data_frames:
         config = layout_config[idx]
-        df = data_frames[idx]
-        fractions = df['Fraction'].unique().tolist()
-        dropdown_options.append([{'label': frac, 'value': frac} for frac in fractions])
-        dropdown_values.append(fractions)  # Set all fractions as default selected
 
-        style_patch = Patch()  # Initialize Patch object
+        style_patch = Patch()
         if pathogen == 'all pathogens' or pathogen == config['pathogen'] or not pathogen:
             style_patch["display"] = "block"
             show_blocks.append(style_patch)
+            graphs.append(update_figure(data_frames[idx]))
         else:
             style_patch["display"] = "none"
             show_blocks.append(style_patch)
-            
-    
+            graphs.append(no_update)
+
+    return show_blocks + show_blocks
+
+# Callback to update time stamp
+@callback(
+    Output('update-time-id', 'children', allow_duplicate=True),
+    Input('pathogen-menu-id', 'value'),
+    prevent_initial_call=True
+)
+def update_time(pathogen):
     # Determine the latest update time across all data files
     latest_time = 0
     for file in check_files:
@@ -261,72 +348,83 @@ def init_page(pathogen, pathname):
     
     if latest_time:
         import pytz
-        from datetime import timezone, datetime, timedelta
-        utc_dt = datetime.fromtimestamp(ti, tz=timezone.utc)
+        from datetime import timezone, datetime
+        utc_dt = datetime.fromtimestamp(latest_time, tz=timezone.utc)
         mt_timezone = pytz.timezone('America/Denver')
-        time_stamp = utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M MT') + ' updated'
+        time_stamp = utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M') + ' updated'
     else:
         time_stamp = "Unknown"
 
-    return [pathogen_options, time_stamp] + dropdown_options + dropdown_values + show_blocks
+    return time_stamp
 
-# Dynamically create callbacks for each graph based on layout_config
-for idx in data_frames:
-    config = layout_config[idx]
-    graph_id = f"chart{idx+1}-graph-id"
-    dropdown_id = f"chart{idx+1}-f-id"
 
-    def generate_callback(idx, config):
-        def update_figure(selected_fractions):
-            df = data_frames.get(idx)
-            if df is None:
-                return {}
-            
-            if selected_fractions:
-                mask = df['Fraction'].isin(selected_fractions)
-            else:
-                mask = df['Date'].notna()
-            
-            plot_data = df[mask]
-            fig = px.line(plot_data, 
-                          x='Date', 
-                          y='Value',
-                          error_y=('Value_std' if 'Value_std' in plot_data.columns else None),
-                          title=config["plot_title"], 
-                          color='Fraction',
-                          height=700,
-                          template='ggplot2')
-            
-            fig.update_layout(
-                yaxis_title=config["plot_yaxis_title"], 
-                xaxis_title=config["plot_xaxis_title"]
-            )
-            fig.update_xaxes(
-                rangeselector=dict(
-                    buttons=[
-                        dict(count=1, label="1M", step="month", stepmode="backward"),
-                        dict(count=6, label="6M", step="month", stepmode="backward"),
-                        dict(count=1, label="YTD", step="year", stepmode="todate"),
-                        dict(count=1, label="1Y", step="year", stepmode="backward"),
-                        dict(label="ALL", step="all")
-                    ]
-                ),
-                rangeslider=dict(visible=True, thickness=0.1),
-                type="date"
-            )
-            fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
-            fig.update_layout(hovermode="x unified")
-            
-            return fig
+# add callback for toggling the collapse on small screens
+@callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
-        return callback(
-            Output(graph_id, 'figure', allow_duplicate=True),
-            [Input(dropdown_id, 'value')],
-            prevent_initial_call=True
-        )(update_figure)
+# Add callback to update modal content when trend card is clicked
+@callback(
+    [
+        Output("trend-modal", "is_open"),
+        Output("trend-modal", "children")
+    ],
+    [
+        Input(f"trend-figure-link{idx+1}", "n_clicks") for idx in range(len(layout_config)) if 'analysis' in layout_config[idx]
+    ],
+    prevent_initial_call=True,
+)
+def toggle_modal(*n_clicks):
+    # Get the ID of the card that was clicked
+    triggered_id = ctx.triggered_id if ctx.triggered_id else None
+    
+    logging.debug(f"Triggered ID: {triggered_id}")
+    
+    if not triggered_id:
+        return False, no_update
+    
+    # Extract index from triggered_id (e.g., "trend-card1" -> 1)
+    card_idx = int(triggered_id.replace("trend-figure-link", "")) - 1
+    
+    # Get the config for this card
+    config = layout_config[card_idx]
+    
+    if 'analysis' not in config or 'figure' not in config['analysis']:
+        return False, no_update
+    
+    # Create modal content with the correct figure and information
+    modal_content = [
+        dbc.ModalHeader(dbc.ModalTitle(f"{config.get('pathogen', 'Analysis')}"), close_button=True),
+        dbc.ModalBody([
+            html.Img(src=config['analysis']['figure'], 
+                     style={"width": "100%", "height": "auto"}),
+            html.P(config['analysis']['description'], 
+                   className="mt-3")
+        ]),
+        dbc.ModalFooter(
+            dbc.Button("Close", id="close-centered", className="ms-auto", n_clicks=0)
+        )
+    ]
+    
+    return True, modal_content
 
-    # Register the callback for the current graph
-    generate_callback(idx, config)
+# Add callback to close the modal when close button is clicked
+@callback(
+    Output("trend-modal", "is_open", allow_duplicate=True),
+    [Input("close-centered", "n_clicks")],
+    prevent_initial_call=True
+)
+def close_modal(n_clicks):
+    if n_clicks:
+        return False
+    return no_update
+
 
 # Run the server
 if __name__ == '__main__':

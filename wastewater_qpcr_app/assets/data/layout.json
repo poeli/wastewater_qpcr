@@ -1,7 +1,7 @@
 [
     {
         "title": "Concentration of SARS-CoV-2 in LANL wastewater",
-        "description": "There are two fractions (F1 and F3/PEG). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater. PEG (beginning February 25, 2025) is RNA extracted from 150 mL wastewater after 10% PEG 0.9% NaCl (w/v) precipitation.",
+        "description": "There are two fractions (F1 and F3). Fraction 1 is RNA extracted from 1 mL of raw wastewater taken from a 24-hour composite sample. Fraction 3 is RNA extracted from a 0.22 µm MCE filter after passing through 150 mL of centrifuged wastewater taken from the same 24-hour composite sample used in Fraction 1.",
         "plot_data_tsv": "assets/data/LIVE-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/LIVE-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of SARS-CoV-2 in LANL wastewater",
@@ -11,61 +11,61 @@
     },
     {
         "title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
-        "description": "This is the signal of SARS-CoV-2 divided by the signal of pepper mild mottle virus, a commonly used human fecal indicator found in high abundance in wastewater and used as a way to normalize the SARS-CoV-2 signal. Prior to Febrary 25, 2025, Fractions 1 and 3 were normalized against PMMoV, and beginning February 25, 2025, only Fraction 1 was normalized against PMMoV.",
+        "description": "This is the signal of SARS-CoV-2 divided by the signal of pepper mild mottle virus, a commonly used human fecal indicator found in high abundance in wastewater and used as a way to normalize the SARS-CoV-2 signal.",
         "plot_data_tsv": "assets/data/PPMoV-qPCR-Daily_Trend.tsv",
         "plot_title": "SARS-CoV-2 concentration normalized against the PMMoV concentration",
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "SARS-CoV-2 Concentration / PMMoV Concentration",
-        "pathogen": "SARS-CoV-2"
+        "pathogen": "SARS-CoV-2",
+        "analysis": {
+        	"trend": "stable + high",
+        	"description": "Mathematical model integrating SARS-CoV-2 concentration normalized against the PMMoV concentration and expected viral shedding dynamics predicts a stable and high trend of SARS-CoV-2 cases: 30 – 40 new daily cases for the week of 04-14-2025.",
+        	"figure": "assets/data/images/SARS_COV_2_website.png"
+        }
     },
     {
         "title": "Concentration of Norovirus in LANL wastewater",
-        "description": "Data collected from the Fraction 3 and PEG precipitated samples only. Data prior to Febrary 25, 2025 was collected from Fraction 3. Data beginning Febrary 25, 2025 was collected from PEG precipitated samples only.",
+        "description": "Data collected from the Fraction 3 sample only.",
         "plot_data_tsv": "assets/data/Norovirus-qPCR-Daily_Trend.tsv",
         "plot_std_tsv": "assets/data/Norovirus-qPCR-Daily_Trend_std.tsv",
         "plot_title": "Concentration of Norovirus in LANL wastewater",
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "Norovirus Virions / L",
-        "pathogen": "Norovirus"
+        "pathogen": "Norovirus",
+        "analysis": {
+        	"trend": "decreasing",
+        	"description": "Mathematical model integrating norovirus concentration normalized against the PMMoV concentration and expected viral shedding dynamics predicts a decreasing trend of norovirus cases: 5 – 20 new daily cases for the week of 04-14-2025.",
+        	"figure": "assets/data/images/Norovirus_website.png"
+        }
     },
     {
         "title": "Concentration of Influenza A in LANL wastewater",
-        "description": "Data collected from the Fraction 3 and PEG precipitated samples only. Data prior to Febrary 25, 2025 was collected from Fraction 3. Data beginning Febrary 25, 2025 was collected from PEG precipitated samples only.",
+        "description": "Data collected from the Fraction 3 sample only.",
         "plot_data_tsv": "assets/data/LIVE-flu-A.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-A-std.tsv",
         "plot_title": "Concentration of Influenza A in LANL wastewater",
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "Influenza A Virions / L",
-        "pathogen": "Influenza A"
+        "pathogen": "Influenza A",
+        "analysis": {
+        	"trend": "decreasing",
+        	"description": "Mathematical model integrating Influenza A concentration normalized against the PMMoV concentration and expected viral shedding dynamics predicts a rapidly decreasing trend of Influenza A cases: 5 – 40 new daily cases for the week of 04-14-2025.",
+        	"figure": "assets/data/images/Influenza_A_Website.png"
+        }
     },
     {
         "title": "Concentration of Influenza B in LANL wastewater",
-        "description": "Data collected from the Fraction 3 and PEG precipitated samples only. Data prior to Febrary 25, 2025 was collected from Fraction 3. Data beginning Febrary 25, 2025 was collected from PEG precipitated samples only.",
+        "description": "Data collected from the Fraction 3 sample only.",
         "plot_data_tsv": "assets/data/LIVE-flu-B.tsv",
         "plot_std_tsv": "assets/data/LIVE-flu-B-std.tsv",
         "plot_title": "Concentration of Influenza B in LANL wastewater",
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "Influenza B Virions / L",
-        "pathogen": "Influenza B"
-    },
-    {
-        "title": "Concentration of H5N1 in LANL wastewater",
-        "description": "Data collected from the PEG precipitated samples only. There is no data for this assay prior to February 25, 2025.",
-        "plot_data_tsv": "assets/data/H5N1-qPCR-Daily_Trend.tsv",
-        "plot_std_tsv": "assets/data/H5N1-qPCR-Daily_Trend_std.tsv",
-        "plot_title": "Concentration of H5N1 in LANL wastewater",
-        "plot_xaxis_title": "Date",
-        "plot_yaxis_title": "H5N1 Virions / L",
-        "pathogen": "H5N1"
-    },
-    {
-        "title": "Concentration of Measles virus in LANL wastewater",
-        "description": "Data collected from the PEG precipitated samples only. There is no data for this assay prior to February 25, 2025.",
-        "plot_data_tsv": "assets/data/MEv-qPCR-Daily_Trend.tsv",
-        "plot_std_tsv": "assets/data/MEv-qPCR-Daily_Trend_std.tsv",
-        "plot_title": "Concentration of Measles virus in LANL wastewater",
-        "plot_xaxis_title": "Date",
-        "plot_yaxis_title": "MEv Virions / L",
-        "pathogen": "Measles"
+        "pathogen": "Influenza B",
+        "analysis": {
+        	"trend": "stable + low",
+        	"description": "Mathematical model integrating Influenza B concentration normalized against the PMMoV concentration and expected viral shedding dynamics predicts a stable and low trend of Influenza B cases: 1 – 5 new daily cases for the week of 04-14-2025. Note the high uncertainty due to stochasticity at low incidence.",
+        	"figure": "assets/data/images/Influenza_B_Website.png"
+        }
     }
 ]
