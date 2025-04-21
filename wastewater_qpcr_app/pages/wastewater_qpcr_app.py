@@ -100,7 +100,7 @@ def update_figure(plot_data):
                 dict(count=1, label="1M", step="month", stepmode="backward"),
                 dict(count=6, label="6M", step="month", stepmode="backward"),
                 dict(count=1, label="YTD", step="year", stepmode="todate"),
-                dict(count=1, label="1Y", step="year", stepmode="backward"),
+                dict(count=1, label="1Y", step="year", stepmode="backward", active=True),
                 dict(label="ALL", step="all")
             ]
         ),
