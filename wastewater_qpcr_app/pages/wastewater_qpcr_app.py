@@ -100,12 +100,14 @@ def update_figure(plot_data):
                 dict(count=1, label="1M", step="month", stepmode="backward"),
                 dict(count=6, label="6M", step="month", stepmode="backward"),
                 dict(count=1, label="YTD", step="year", stepmode="todate"),
-                dict(count=1, label="1Y", step="year", stepmode="backward", active=True),
+                dict(count=1, label="1Y", step="year", stepmode="backward"),
                 dict(label="ALL", step="all")
             ]
         ),
         rangeslider=dict(visible=True, thickness=0.1),
-        type="date"
+        type="date",
+        range=[(max_date - pd.DateOffset(years=1)).date(), 
+               max_date.date()]
     )
     fig.update_traces(error_y_color="#AAAAAA", error_y_width=0.04, mode="markers+lines", hovertemplate=None)
     fig.update_layout(hovermode="x unified")
