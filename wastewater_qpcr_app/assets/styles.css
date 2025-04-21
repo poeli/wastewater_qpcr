@@ -1,0 +1,25 @@
+#pathogen-menu-id .Select-value-label {
+    color: #AAA;
+}
+
+#pathogen-menu-id .Select-control {
+    width: 10rem;
+    font-size: 0.9rem;
+    background-color: #222222;
+    border: 0px solid #222222;
+}
+
+#pathogen-menu-id {
+    font-size: 0.8rem;
+}
+
+#update-time-id {
+    color: #222222;
+    font-size: 0.8rem;
+}
+
+/* when mouseover to the trend-card, transit to the background color */
+.trend-card:hover {
+    background-color: #eeeeee;
+    transition: background-color 0.3s ease;
+}

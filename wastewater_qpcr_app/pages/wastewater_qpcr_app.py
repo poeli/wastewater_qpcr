@@ -265,12 +265,7 @@ navbar = dbc.Navbar(
                 id="navbar-collapse",
                 is_open=False,
                 navbar=True,
-            ),
-            html.Div([
-                html.Span(id='update-time-id')
-                ],
-                className='d-flex fs-6'
-            ),
+            )
         ]
     ),
     color="dark",
@@ -287,8 +282,10 @@ layout = dbc.Container([
     modal,
     navbar,
     dbc.Row([
-        dbc.Col(
-            html.Div(trend_cards),
+        dbc.Col([
+                html.Div(trend_cards),
+                html.Div(html.Span("test...", id='update-time-id')),
+            ],
             xs=12, md=3, lg=2,  # Responsive widths
             style={"marginTop": "5rem", "paddingLeft": "2rem"}
         ),
@@ -306,8 +303,8 @@ layout = dbc.Container([
 
 # Callback to initialize chart dropdowns and update block display based on pathogen selection
 @callback(
-    *[Output(f"trend-card{idx+1}", 'style', allow_duplicate=True) for idx in range(len(layout_config)) if 'analysis' in layout_config[idx]],
-    *[Output(f"chart{idx+1}-block-id", 'style', allow_duplicate=True) for idx in data_frames],
+    *[Output(f"trend-card{idx+1}", 'style') for idx in range(len(layout_config)) if 'analysis' in layout_config[idx]],
+    *[Output(f"chart{idx+1}-block-id", 'style') for idx in data_frames],
     Input('pathogen-menu-id', 'value'),
     prevent_initial_call=True
 )
@@ -315,6 +312,17 @@ def init_page(pathogen):
     global data_frames, layout_config
     graphs = []
     show_blocks = []
+
+    for idx in range(len(layout_config)):
+        if 'analysis' in layout_config[idx]:
+            config = layout_config[idx]
+            style_patch = Patch()
+            if pathogen == 'all pathogens' or pathogen == config['pathogen'] or not pathogen:
+                style_patch["display"] = "block"
+                show_blocks.append(style_patch)
+            else:
+                style_patch["display"] = "none"
+                show_blocks.append(style_patch)
 
     for idx in data_frames:
         config = layout_config[idx]
@@ -329,13 +337,12 @@ def init_page(pathogen):
             show_blocks.append(style_patch)
             graphs.append(no_update)
 
-    return show_blocks + show_blocks
+    return show_blocks
 
 # Callback to update time stamp
 @callback(
-    Output('update-time-id', 'children', allow_duplicate=True),
+    Output('update-time-id', 'children'),
     Input('pathogen-menu-id', 'value'),
-    prevent_initial_call=True
 )
 def update_time(pathogen):
     # Determine the latest update time across all data files
@@ -351,7 +358,7 @@ def update_time(pathogen):
         from datetime import timezone, datetime
         utc_dt = datetime.fromtimestamp(latest_time, tz=timezone.utc)
         mt_timezone = pytz.timezone('America/Denver')
-        time_stamp = utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M') + ' updated'
+        time_stamp = "Last updated: " + utc_dt.astimezone(mt_timezone).strftime('%Y-%m-%d %H:%M')
     else:
         time_stamp = "Unknown"
 
