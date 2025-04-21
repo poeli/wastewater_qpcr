@@ -65,7 +65,7 @@
         "analysis": {
         	"trend": "stable + low",
         	"description": "Mathematical model integrating Influenza B concentration normalized against the PMMoV concentration and expected viral shedding dynamics predicts a stable and low trend of Influenza B cases: 1 – 5 new daily cases for the week of 04-14-2025. Note the high uncertainty due to stochasticity at low incidence.",
-        	"figure": "assets/data/images/Influenza_B_Website.png"
+        	"figure": "assets/data/images/Influenza_B_website.png"
         }
     }
 ]
