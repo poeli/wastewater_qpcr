@@ -20,10 +20,30 @@ logging.basicConfig(
 dash.register_page(__name__, path='/')
 
 # Define styles
-CONTENT_STYLE = {
+PLOT_STYLE = {
     'marginTop': '1rem',
     # 'maxWidth': '80rem',
     "padding": "0rem 1rem",
+}
+
+CONTENT_STYLE = {
+    "margin-left": "18rem",
+    "margin-right": "2rem",
+    "margin-top": "2rem",
+    "padding": "2rem 1rem",
+}
+
+# styling the sidebar
+SIDEBAR_STYLE = {
+    "position": "fixed",
+    "top": "3rem",
+    "left": 0,
+    "bottom": 0,
+    "width": "16rem",
+    "padding": "2rem 1rem",
+    "background-color": "#f8f9fa",
+    "overflow-y": "auto",
+    "max-height": "calc(100vh - 3rem)"
 }
 
 # Containers for graph layouts and data frames
@@ -162,7 +182,7 @@ for idx, config in enumerate(layout_config):
             ],
             id=block_id,
             className='mx-lg-auto',
-            style=CONTENT_STYLE
+            style=PLOT_STYLE
         )
     )
 
@@ -205,7 +225,6 @@ for idx, config in enumerate(layout_config):
         trend_cards.append(card)
     else:
         continue
-
 
 modal = html.Div(
     [
@@ -279,24 +298,31 @@ navbar = dbc.Navbar(
 # ---------------------------
 # Define the Overall Layout with Two Columns
 # ---------------------------
+
+sidebar = html.Div(
+    trend_cards+[html.Div(html.Span("test...", id='update-time-id'))],
+    style=SIDEBAR_STYLE)
+
+main_content = html.Div(viz_layout_children, style=CONTENT_STYLE)
+
 layout = dbc.Container([
     dcc.Location(id='url', refresh='callback-nav'),
     modal,
     navbar,
-    dbc.Row([
-        dbc.Col([
-                html.Div(trend_cards),
-                html.Div(html.Span("test...", id='update-time-id')),
-            ],
-            xs=12, md=3, lg=2,  # Responsive widths
-            style={"marginTop": "5rem", "paddingLeft": "2rem"}
-        ),
-        dbc.Col(
-            html.Div(viz_layout_children),
-            xs=12, md=9, lg=10,  # Responsive widths
-            style={"marginTop": "5rem"}
-        )
-    ])
+    sidebar,
+    main_content
+    # dbc.Row([
+    #     dbc.Col(
+    #         sidebar,
+    #         xs=12, md=3, lg=2,  # Responsive widths
+    #         # style={"marginTop": "5rem", "paddingLeft": "2rem"}
+    #     ),
+    #     dbc.Col(
+    #         main_content,
+    #         xs=12, md=9, lg=10,  # Responsive widths
+    #         # style={"marginTop": "5rem"}
+    #     )
+    # ])
 ], fluid=True)
 
 # ---------------------------
