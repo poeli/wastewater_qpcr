@@ -20,6 +20,8 @@
 
 /* when mouseover to the trend-card, transit to the background color */
 .trend-card:hover {
-    background-color: #eeeeee;
+    /* change the line width */
+    border: 1px solid #878787;
+    /* background-color: #fffdf0; */
     transition: background-color 0.3s ease;
 }
