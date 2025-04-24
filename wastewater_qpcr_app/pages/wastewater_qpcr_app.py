@@ -301,7 +301,7 @@ sidebar = html.Div(
     trend_cards+[html.Div(html.Span("test...", id='update-time-id'))],
     style=SIDEBAR_STYLE)
 
-main_content = dcc.Loading(html.Div(viz_layout_children, style=CONTENT_STYLE))
+main_content = html.Div(viz_layout_children, style=CONTENT_STYLE)
 
 layout = dbc.Container([
     dcc.Location(id='url', refresh='callback-nav'),
