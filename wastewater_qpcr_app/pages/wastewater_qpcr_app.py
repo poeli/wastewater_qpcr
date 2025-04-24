@@ -173,9 +173,7 @@ for idx, config in enumerate(layout_config):
                 html.Div([
                     dbc.Row(
                         [
-                            dcc.Loading(dbc.Col(
-                                dcc.Graph(id=graph_id, figure=fig), width=12, lg=12
-                            )),
+                            dbc.Col(dcc.Graph(id=graph_id, figure=fig), width=12, lg=12)
                         ],
                     )
                 ], className="mb-3")
@@ -303,7 +301,7 @@ sidebar = html.Div(
     trend_cards+[html.Div(html.Span("test...", id='update-time-id'))],
     style=SIDEBAR_STYLE)
 
-main_content = html.Div(viz_layout_children, style=CONTENT_STYLE)
+main_content = dcc.Loading(html.Div(viz_layout_children, style=CONTENT_STYLE))
 
 layout = dbc.Container([
     dcc.Location(id='url', refresh='callback-nav'),
