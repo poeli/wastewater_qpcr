@@ -87,5 +87,15 @@
         "plot_xaxis_title": "Date",
         "plot_yaxis_title": "MEv Virions / L",
         "pathogen": "Measles"
+    },
+    {
+        "title": "Concentration of Respiratory Syncytial Virus in LANL wastewater",
+        "description": "Data collected from the PEG precipitated samples only. There is no data for this assay prior to October 7, 2025.",
+        "plot_data_tsv": "assets/data/RSV-qPCR-Daily_Trend.tsv",
+        "plot_std_tsv": "assets/data/RSV-qPCR-Daily_Trend_std.tsv",
+        "plot_title": "Concentration of Respiratory Syncytial Virus in LANL wastewater",
+        "plot_xaxis_title": "Date",
+        "plot_yaxis_title": "RSV Virions / L",
+        "pathogen": "RSV"
     }
 ]
