@@ -9,6 +9,11 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 import dash
 from dash import dcc, html, State, Input, Output, callback, ctx, Patch, no_update, ALL
+import openai
+from openai import OpenAI
+import httpx
+import os
+from datetime import datetime, timedelta
 
 # Configure logging
 logging.basicConfig(
@@ -17,7 +22,85 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M',
 )
 
+# Initialize OpenAI client - assuming you have the API key set in environment variable
+# Replace with your actual API key and base URL
+openai_api_key = "sk-Upattg2kt62WTYMOVjkVbA"
+openai_api_base = "https://aiportal-api.aws.lanl.gov/v1" # Or your custom base URL
+
+client = openai.OpenAI(
+    api_key=openai_api_key,
+    base_url=openai_api_base,
+    http_client=httpx.Client(verify=False)
+)
+
 dash.register_page(__name__, path='/')
+
+# Function to generate AI summary
+def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-instruct-v1:0"):
+    """
+    Generate an AI summary of the pathogen data using OpenAI API
+    """
+    try:
+        # Prepare the data for summary
+        if selected_pathogen == 'all pathogens':
+            summary_text = "Summary of all pathogens in wastewater:\n\n"
+            for idx, config in enumerate(layout_config):
+                if idx in data_frames:
+                    df = data_frames[idx]
+                    pathogen = config['pathogen']
+                    latest_date = df['Date'].max()
+                    df_latest = df[df['Date'] == latest_date]
+                    summary_text += f"- {pathogen}: Latest data from {latest_date}\n"
+                    for _, row in df_latest.iterrows():
+                        summary_text += f"  {row['Fraction']}: {row['Value']} {config.get('plot_yaxis_title', 'units')}\n"
+                    if 'analysis' in config:
+                        summary_text += f"  Trend: {config['analysis'].get('trend', 'N/A')}\n"
+        else:
+            # Get data for selected pathogen only
+            summary_text = f"Summary of {selected_pathogen} in wastewater:\n\n"
+            for idx, config in enumerate(layout_config):
+                if config['pathogen'] == selected_pathogen and idx in data_frames:
+                    df = data_frames[idx]
+                    latest_date = df['Date'].max()
+                    one_month_ago = (datetime.strptime(latest_date, '%Y-%m-%d') - timedelta(days=30)).strftime('%Y-%m-%d')
+                    df_latest = df[df['Date'] == latest_date]
+                    df_month = df[df['Date'] >= one_month_ago]
+                    
+                    summary_text += f"Latest data from {latest_date}\n"
+                    for _, row in df_latest.iterrows():
+                        summary_text += f"{row['Fraction']}: {row['Value']} {config.get('plot_yaxis_title', 'units')}\n"
+                    
+                    # Calculate month-over-month trend
+                    if len(df_month) > 1:
+                        grouped = df_month.groupby('Fraction')['Value'].agg(['mean', 'min', 'max'])
+                        summary_text += "\nMonth summary:\n"
+                        for frac, stats in grouped.iterrows():
+                            summary_text += f"{frac}: Mean={stats['mean']:.2f}, Range={stats['min']:.2f}-{stats['max']:.2f}\n"
+                    
+                    if 'analysis' in config:
+                        summary_text += f"\nTrend analysis: {config['analysis'].get('trend', 'N/A')}\n"
+                        summary_text += f"Description: {config['analysis'].get('description', 'N/A')}\n"
+                    
+                    summary_text += f"\nData description: {config.get('description', '')}\n"
+        
+        logging.info("Sending request to OpenAI API")
+        # Call OpenAI API to generate summary
+        response = client.chat.completions.create(
+            model=model, 
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
+                {"role": "user", "content": f"Summarize the wastewater viral surveillance data for the last 7 days for a managerial briefing in 1 paragraph. Focus on: Key trends (increases/decreases) by virus - Notable new detections - Overall data coverage and any quality caveats: \n\n{summary_text}"}
+            ],
+            max_tokens=500
+        )
+        
+        summary = response.choices[0].message.content
+        logging.info("AI summary generated successfully")
+        
+        return summary
+    except Exception as e:
+        logging.error(f"Error generating AI summary: {e}")
+        return f"Error generating AI summary: {str(e)}"
 
 # Define styles
 PLOT_STYLE = {
@@ -257,6 +340,16 @@ dropdown = dcc.Dropdown(
     placeholder="all pathogens",
 )
 
+# AI summary button moved to navbar
+summary_button = dbc.Button(
+    "✦⁺₊ AI Summary", 
+    id="generate-ai-summary-btn", 
+    color="light", 
+    className="ms-2", 
+    size="sm",
+    outline=True
+)
+
 navbar = dbc.Navbar(
     dbc.Container(
         [
@@ -280,7 +373,14 @@ navbar = dbc.Navbar(
             ),
             dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
             dbc.Collapse(
-                dropdown,
+                dbc.Row(
+                    [
+                        dbc.Col(dropdown, className="me-2"),
+                        dbc.Col(summary_button, width="auto")
+                    ],
+                    className="ms-auto flex-nowrap mt-3 mt-md-0",
+                    align="center"
+                ),
                 id="navbar-collapse",
                 is_open=False,
                 navbar=True,
@@ -301,7 +401,27 @@ sidebar = html.Div(
     trend_cards+[html.Div(html.Span("test...", id='update-time-id'))],
     style=SIDEBAR_STYLE)
 
-main_content = html.Div(viz_layout_children, style=CONTENT_STYLE)
+# Create AI summary card component - initially hidden
+ai_summary_card = dbc.Card(
+    [
+        dbc.CardHeader("AI Summary"),
+        dbc.CardBody(
+            [
+                html.P("", id="ai-summary-text"),
+                dbc.Spinner(color="secondary", type="grow", size="sm", id="ai-summary-loading"),
+            ]
+        ),
+    ],
+    id="ai-summary-card",
+    className="mb-4",
+    style={"display": "none"}
+)
+
+# Add the AI summary card to the main content
+main_content = html.Div([
+    ai_summary_card,
+    html.Div(viz_layout_children)
+], style=CONTENT_STYLE)
 
 layout = dbc.Container([
     dcc.Location(id='url', refresh='callback-nav'),
@@ -401,6 +521,36 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
+# Callback for generating AI summary block visibility
+@callback(
+    Output("ai-summary-card", "style"),
+    [Input("generate-ai-summary-btn", "n_clicks")],
+    prevent_initial_call=True
+)
+def update_ai_summary_block(n_clicks):
+    if n_clicks:
+        return {"display": "block"}        
+    return no_update
+
+# Callback for generating AI summary
+@callback(
+    Output("ai-summary-text", "children"),
+    Output("ai-summary-loading", "style"),
+    [Input("generate-ai-summary-btn", "n_clicks")],
+    [State("pathogen-menu-id", "value")],
+    prevent_initial_call=True
+)
+def update_ai_summary(n_clicks, selected_pathogen):
+    if n_clicks:        
+        # Generate summary
+        summary = generate_ai_summary(data_frames, selected_pathogen)
+        # Hide loading spinner but keep card visible
+        loading_style = {"display": "none"}
+
+        return summary, loading_style
+
+    return no_update, no_update
 
 # Add callback to update modal content when trend card is clicked
 @callback(

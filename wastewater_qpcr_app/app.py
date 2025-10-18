@@ -21,4 +21,5 @@ app.title = "Wastewater qPCR"
 server = app.server
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8765)
+    # Disable debug mode to avoid pkgutil.find_loader error in Python 3.14+
+    app.run(debug=False, port=8765)
