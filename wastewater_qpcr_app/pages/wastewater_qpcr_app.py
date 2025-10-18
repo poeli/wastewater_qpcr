@@ -89,7 +89,7 @@ def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-i
             model=model, 
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
-                {"role": "user", "content": f"Summarize the wastewater viral surveillance data for the last 7 days for a managerial briefing in 1 paragraph. Focus on: Key trends (increases/decreases) by virus - Notable new detections - Overall data coverage and any quality caveats: \n\n{summary_text}"}
+                {"role": "user", "content": f"Summarize the wastewater viral surveillance data for the last 7 days for a briefing in 1 paragraph. Focus on: 1) Key trends (increases/decreases) by pathogens; 2) Notable new detections;: \n\n{summary_text}"}
             ],
             max_tokens=500
         )
@@ -524,13 +524,15 @@ def toggle_navbar_collapse(n, is_open):
 
 # Callback for generating AI summary block visibility
 @callback(
+    Output("ai-summary-text", "children", allow_duplicate=True),
+    Output("ai-summary-loading", "style", allow_duplicate=True),
     Output("ai-summary-card", "style"),
     [Input("generate-ai-summary-btn", "n_clicks")],
     prevent_initial_call=True
 )
 def update_ai_summary_block(n_clicks):
     if n_clicks:
-        return {"display": "block"}        
+        return "", {"display": "block"}, {"display": "block"}
     return no_update
 
 # Callback for generating AI summary
