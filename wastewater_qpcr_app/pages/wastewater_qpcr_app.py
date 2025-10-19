@@ -53,8 +53,8 @@ def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-i
                     summary_text += f"- {pathogen}: Latest data from {latest_date}\n"
                     for _, row in df_latest.iterrows():
                         summary_text += f"  {row['Fraction']}: {row['Value']} {config.get('plot_yaxis_title', 'units')}\n"
-                    if 'analysis' in config:
-                        summary_text += f"  Trend: {config['analysis'].get('trend', 'N/A')}\n"
+                    # if 'analysis' in config:
+                    #     summary_text += f"  Trend: {config['analysis'].get('trend', 'N/A')}\n"
         else:
             # Get data for selected pathogen only
             summary_text = f"Summary of {selected_pathogen} in wastewater:\n\n"
@@ -77,9 +77,9 @@ def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-i
                         for frac, stats in grouped.iterrows():
                             summary_text += f"{frac}: Mean={stats['mean']:.2f}, Range={stats['min']:.2f}-{stats['max']:.2f}\n"
                     
-                    if 'analysis' in config:
-                        summary_text += f"\nTrend analysis: {config['analysis'].get('trend', 'N/A')}\n"
-                        summary_text += f"Description: {config['analysis'].get('description', 'N/A')}\n"
+                    # if 'analysis' in config:
+                    #     summary_text += f"\nTrend analysis: {config['analysis'].get('trend', 'N/A')}\n"
+                    #     summary_text += f"Description: {config['analysis'].get('description', 'N/A')}\n"
                     
                     summary_text += f"\nData description: {config.get('description', '')}\n"
         
