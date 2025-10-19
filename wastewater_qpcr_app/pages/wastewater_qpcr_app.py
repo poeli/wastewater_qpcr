@@ -89,7 +89,7 @@ def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-i
             model=model, 
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
-                {"role": "user", "content": f"Summarize the wastewater viral surveillance data for the last 7 days for a briefing in 1 paragraph. Keep it under 120 words, plain language, no speculation. Include dates rather than relative time (“last week”). Focus on: 1) Key trends (increases/decreases) by pathogens; 2) Notable new detections;: \n\n{summary_text}"}
+                {"role": "user", "content": f"Summarize the wastewater viral surveillance data for the last 7 days for a briefing in 1 paragraph. Keep it under 130 words, plain language, no speculation. Focus on: 1) Key trends (increases/decreases) by pathogens;  2) Notable new detections;: \n\n{summary_text}"}
             ],
             max_tokens=500
         )
