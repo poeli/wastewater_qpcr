@@ -413,7 +413,7 @@ ai_summary_card = dbc.Card(
         ),
     ],
     id="ai-summary-card",
-    className="mb-4",
+    className="mb-4, mt-4",
     style={"display": "none"}
 )
 
