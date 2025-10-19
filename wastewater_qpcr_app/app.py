@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 external_stylesheets = [
     dbc.themes.BOOTSTRAP, 
     dbc.icons.FONT_AWESOME,
-    'assets/style.css'
+    'assets/styles.css'
 ]
 
 # Initialize Dash app
