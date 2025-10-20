@@ -539,12 +539,12 @@ def update_ai_summary_block(n_clicks):
 @callback(
     Output("ai-summary-text", "children"),
     Output("ai-summary-loading", "style"),
-    [Input("generate-ai-summary-btn", "n_clicks")],
+    [Input("ai-summary-loading", "style")],
     [State("pathogen-menu-id", "value")],
     prevent_initial_call=True
 )
-def update_ai_summary(n_clicks, selected_pathogen):
-    if n_clicks:        
+def update_ai_summary_content(loading_style, selected_pathogen):
+    if loading_style == {"display": "block"}:        
         # Generate summary
         summary = generate_ai_summary(data_frames, selected_pathogen)
         # Hide loading spinner but keep card visible
