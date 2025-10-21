@@ -114,7 +114,7 @@ def generate_ai_summary(data_frames, selected_pathogen, model="gpt-oss-120b"):
                 {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
                 {"role": "user", "content": user_prompts}
             ],
-            max_tokens=500
+            max_tokens=1000
         )
         
         summary = response.choices[0].message.content
