@@ -36,10 +36,9 @@ client = openai.OpenAI(
 dash.register_page(__name__, path='/')
 
 # Function to generate AI summary
-def generate_ai_summary(data_frames, selected_pathogen, model="gpt-oss-120b", streaming=False):
+def generate_ai_summary(data_frames, selected_pathogen, model="gpt-oss-120b"):
     """
     Generate an AI summary of the pathogen data using OpenAI API
-    If streaming=True, returns a generator that yields content in chunks
     """
     try:
         # Prepare the data for summary
@@ -108,34 +107,20 @@ def generate_ai_summary(data_frames, selected_pathogen, model="gpt-oss-120b", st
         # Call OpenAI API to generate summary
         user_prompts = f"Summarize the wastewater viral surveillance data for the last 7 days and a month for a briefing in 1 paragraph. Use plain language, no speculation. Convert large numbers into a human-readable abbreviated form (e.g. 3,453,358 to ~3.4M). Focus on: \n1) Key trends (increases/decreases) by pathogens;  \n2) Notable new detections;: \n\n{summary_text}"
         logging.info("User prompts: \n"+user_prompts)
+
+        response = client.chat.completions.create(
+            model=model, 
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
+                {"role": "user", "content": user_prompts}
+            ],
+            max_tokens=1000
+        )
         
-        if streaming:
-            # Use streaming mode for real-time updates
-            stream = client.chat.completions.create(
-                model=model, 
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
-                    {"role": "user", "content": user_prompts}
-                ],
-                max_tokens=1000,
-                stream=True
-            )
-            return stream
-        else:
-            # Regular non-streaming mode
-            response = client.chat.completions.create(
-                model=model, 
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
-                    {"role": "user", "content": user_prompts}
-                ],
-                max_tokens=1000
-            )
-            
-            summary = response.choices[0].message.content
-            logging.info("AI summary generated successfully")
-            
-            return summary
+        summary = response.choices[0].message.content
+        logging.info("AI summary generated successfully")
+        
+        return summary
     except Exception as e:
         logging.error(f"Error generating AI summary: {e}")
         return f"Error generating AI summary: {str(e)}"
@@ -447,9 +432,6 @@ ai_summary_card = dbc.Card(
             [
                 html.P("", id="ai-summary-text"),
                 dbc.Spinner(color="secondary", type="grow", size="sm", id="ai-summary-loading"),
-                # Hidden components for streaming functionality
-                dcc.Store(id="streaming-state", data={"active": False, "complete": False}),
-                dcc.Interval(id="streaming-interval", interval=100, disabled=True),
             ]
         ),
     ],
@@ -563,106 +545,37 @@ def toggle_navbar_collapse(n, is_open):
         return not is_open
     return is_open
 
-# Global variable to store the streaming response generator
-streaming_response = None
-streaming_buffer = ""
-
-# Callback for generating AI summary block visibility and initializing streaming
+# Callback for generating AI summary block visibility
 @callback(
     Output("ai-summary-text", "children", allow_duplicate=True),
     Output("ai-summary-loading", "style", allow_duplicate=True),
     Output("ai-summary-card", "style"),
-    Output("streaming-state", "data"),
-    Output("streaming-interval", "disabled"),
     [Input("generate-ai-summary-btn", "n_clicks")],
-    [State("pathogen-menu-id", "value")],
     prevent_initial_call=True
 )
-def update_ai_summary_block(n_clicks, selected_pathogen):
-    global streaming_response, streaming_buffer
-    
+def update_ai_summary_block(n_clicks):
     if n_clicks:
-        # Reset the streaming buffer
-        streaming_buffer = ""
-        
-        # Initialize streaming response
-        streaming_response = generate_ai_summary(data_frames, selected_pathogen, streaming=True)
-        
-        # Set streaming state to active
-        streaming_state = {"active": True, "complete": False}
-        
-        return "", {"display": "block"}, {"display": "block"}, streaming_state, False
-    
-    return no_update, no_update, no_update, no_update, no_update
+        return "", {"display": "block"}, {"display": "block"}
+    return no_update
 
-# Callback for updating streaming content
+# Callback for generating AI summary
 @callback(
     Output("ai-summary-text", "children"),
     Output("ai-summary-loading", "style"),
-    Output("streaming-state", "data", allow_duplicate=True),
-    Output("streaming-interval", "disabled", allow_duplicate=True),
-    [Input("streaming-interval", "n_intervals")],
-    [State("streaming-state", "data")],
+    [Input("ai-summary-loading", "style")],
+    [State("pathogen-menu-id", "value")],
     prevent_initial_call=True
 )
-def update_streaming_content(n_intervals, streaming_state):
-    global streaming_response, streaming_buffer
-    
-    if not streaming_state["active"] or streaming_state["complete"]:
-        return no_update, no_update, no_update, no_update
-    
-    try:
-        # Process a chunk of the stream
-        chunk_processed = False
-        new_content = ""
-        
-        # Try to get the next chunk from the stream
-        try:
-            chunk = next(streaming_response)
-            chunk_content = chunk.choices[0].delta.content
-            if chunk_content:
-                streaming_buffer += chunk_content
-                new_content = streaming_buffer
-                chunk_processed = True
-        except StopIteration:
-            # Stream is complete
-            streaming_state["active"] = False
-            streaming_state["complete"] = True
-            loading_style = {"display": "none"}
-            return streaming_buffer, loading_style, streaming_state, True
+def update_ai_summary_content(loading_style, selected_pathogen):
+    if loading_style == {"display": "block"}:        
+        # Generate summary
+        summary = generate_ai_summary(data_frames, selected_pathogen)
+        # Hide loading spinner but keep card visible
+        loading_style = {"display": "none"}
 
-        if chunk_processed:
-            return new_content, {"display": "block"}, streaming_state, False
-            
-    except Exception as e:
-        logging.error(f"Error in streaming: {e}")
-        streaming_state["active"] = False
-        streaming_state["complete"] = True
-        return f"Error in AI summary streaming: {str(e)}", {"display": "none"}, streaming_state, True
-    
-    return no_update, no_update, no_update, no_update
+        return summary, loading_style
 
-# # Fallback callback for non-streaming generation (in case streaming fails)
-# @callback(
-#     Output("ai-summary-text", "children", allow_duplicate=True),
-#     Output("ai-summary-loading", "style", allow_duplicate=True),
-#     Output("streaming-interval", "disabled", allow_duplicate=True),
-#     [Input("streaming-state", "data")],
-#     [State("pathogen-menu-id", "value")],
-#     prevent_initial_call=True
-# )
-# def fallback_ai_summary(streaming_state, selected_pathogen):
-#     # If streaming was attempted but no chunks were processed
-#     if streaming_state.get("active") and not streaming_state.get("complete") and streaming_buffer == "":
-#         try:
-#             # Generate summary without streaming as fallback
-#             summary = generate_ai_summary(data_frames, selected_pathogen, streaming=False)
-#             loading_style = {"display": "none"}
-#             return summary, loading_style, True
-#         except Exception as e:
-#             return f"Error generating AI summary: {str(e)}", {"display": "none"}, True
-    
-#     return no_update, no_update, no_update
+    return no_update, no_update
 
 # Add callback to update modal content when trend card is clicked
 @callback(
