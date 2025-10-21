@@ -105,7 +105,7 @@ def generate_ai_summary(data_frames, selected_pathogen, model="gpt-oss-120b"):
         
         logging.info("Sending request to OpenAI API:")
         # Call OpenAI API to generate summary
-        user_prompts = f"Summarize the wastewater viral surveillance data for the last 7 days and a month for a briefing in 1 paragraph. Keep it under 200 words, plain language, no speculation. Convert large numbers into a human-readable abbreviated form (e.g. 3,453,358 to ~3.4M). Focus on: \n1) Key trends (increases/decreases) by pathogens;  \n2) Notable new detections;: \n\n{summary_text}"
+        user_prompts = f"Summarize the wastewater viral surveillance data for the last 7 days and a month for a briefing in 1 paragraph. Keep it under 250 words, plain language, no speculation. Convert large numbers into a human-readable abbreviated form (e.g. 3,453,358 to ~3.4M). Focus on: \n1) Key trends (increases/decreases) by pathogens;  \n2) Notable new detections;: \n\n{summary_text}"
         logging.info("User prompts: \n"+user_prompts)
 
         response = client.chat.completions.create(
