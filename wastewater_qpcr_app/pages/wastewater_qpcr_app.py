@@ -36,7 +36,7 @@ client = openai.OpenAI(
 dash.register_page(__name__, path='/')
 
 # Function to generate AI summary
-def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-instruct-v1:0"):
+def generate_ai_summary(data_frames, selected_pathogen, model="gpt-oss-120b"):
     """
     Generate an AI summary of the pathogen data using OpenAI API
     """
@@ -50,11 +50,31 @@ def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-i
                     pathogen = config['pathogen']
                     latest_date = df['Date'].max()
                     df_latest = df[df['Date'] == latest_date]
-                    summary_text += f"- {pathogen}: Latest data from {latest_date}\n"
+                    one_week_ago = (datetime.strptime(latest_date, '%Y-%m-%d') - timedelta(days=7)).strftime('%Y-%m-%d')
+                    one_month_ago = (datetime.strptime(latest_date, '%Y-%m-%d') - timedelta(days=30)).strftime('%Y-%m-%d')
+                    df_month = df[df['Date'] >= one_month_ago]
+                    df_week = df[df['Date'] >= one_week_ago]
+
+                    summary_text += f"\n- {pathogen} ({config.get('plot_yaxis_title', 'units')}):\n"
+
+                    summary_text += f"\nLatest data from {latest_date}:\n"
                     for _, row in df_latest.iterrows():
-                        summary_text += f"  {row['Fraction']}: {row['Value']} {config.get('plot_yaxis_title', 'units')}\n"
-                    # if 'analysis' in config:
-                    #     summary_text += f"  Trend: {config['analysis'].get('trend', 'N/A')}\n"
+                        summary_text += f"  {row['Fraction']}: {row['Value']}\n"
+
+                    # Calculate month-over-month trend
+                    if len(df_week) > 1:
+                        grouped = df_week.groupby('Fraction')['Value'].agg(['mean', 'min', 'max'])
+                        summary_text += f"\nWeek summary ({one_week_ago} to {latest_date}):\n"
+                        for frac, stats in grouped.iterrows():
+                            summary_text += f"{frac}: Mean={stats['mean']:.2f}, Range={stats['min']:.2f}-{stats['max']:.2f}\n"
+
+                    # Calculate month-over-month trend
+                    if len(df_month) > 1:
+                        grouped = df_month.groupby('Fraction')['Value'].agg(['mean', 'min', 'max'])
+                        summary_text += f"\nMonth summary ({one_month_ago} to {latest_date}):\n"
+                        for frac, stats in grouped.iterrows():
+                            summary_text += f"{frac}: Mean={stats['mean']:.2f}, Range={stats['min']:.2f}-{stats['max']:.2f}\n"
+
         else:
             # Get data for selected pathogen only
             summary_text = f"Summary of {selected_pathogen} in wastewater:\n\n"
@@ -83,13 +103,16 @@ def generate_ai_summary(data_frames, selected_pathogen, model="meta.llama3-70b-i
                     
                     summary_text += f"\nData description: {config.get('description', '')}\n"
         
-        logging.info("Sending request to OpenAI API")
+        logging.info("Sending request to OpenAI API:")
         # Call OpenAI API to generate summary
+        user_prompts = f"Summarize the wastewater viral surveillance data for the last 7 days and a month for a briefing in 1 paragraph. Keep it under 200 words, plain language, no speculation. Convert large numbers into a human-readable abbreviated form (e.g. 3,453,358 to ~3.4M). Focus on: \n1) Key trends (increases/decreases) by pathogens;  \n2) Notable new detections;: \n\n{summary_text}"
+        logging.info("User prompts: \n"+user_prompts)
+
         response = client.chat.completions.create(
             model=model, 
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that summarizes wastewater pathogen data. Provide clear insights about trends and significance of the data."},
-                {"role": "user", "content": f"Summarize the wastewater viral surveillance data for the last 7 days for a briefing in 1 paragraph. Keep it under 130 words, plain language, no speculation. Convert large numbers into a human-readable abbreviated form (e.g. 3,453,358 to ~3.4M). Focus on: 1) Key trends (increases/decreases) by pathogens;  2) Notable new detections;: \n\n{summary_text}"}
+                {"role": "user", "content": user_prompts}
             ],
             max_tokens=500
         )
